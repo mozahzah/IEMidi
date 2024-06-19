@@ -29,6 +29,8 @@ Generated\ Files/
 .idea/**/deployment.xml
 .idea/**/usage.statistics.xml
 .idea/**/dictionaries
+.fleet/
+.cache/
 
 # User-specific files (Mono Auto Generated)
 mono_crash.*
