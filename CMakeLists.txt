@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.24)
+cmake_minimum_required(VERSION 3.30)
 project(IEMidiMapper VERSION 1.0.0 LANGUAGES CXX)
 
 # misc function definitions
@@ -18,6 +18,7 @@ message("Using Compiler: ${CMAKE_CXX_COMPILER_ID}")
 message("version: ${CMAKE_CXX_COMPILER_VERSION}")
 message("CXX standard: ${CMAKE_CXX_STANDARD}")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL "")
 
 # Misc conditional setup
 begin_section_message("Working environment")
@@ -51,12 +52,10 @@ add_subdirectory(ThirdParty/imgui)
 # Add executable and link libraries
 begin_section_message("Adding executable and finalizing library linking")
 file(GLOB SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/Source/*.cpp")
-add_library(IEMidiMapperLib SHARED ${SOURCE_FILES})
-target_link_libraries(IEMidiMapperLib PUBLIC rtmidi)
-target_link_libraries(IEMidiMapperLib PUBLIC imgui)
+add_library(LIEMidiMapper STATIC ${SOURCE_FILES})
+target_include_directories(LIEMidiMapper PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/Include)
+target_link_libraries(LIEMidiMapper PUBLIC rtmidi)
+target_link_libraries(LIEMidiMapper PUBLIC imgui)
 
-add_executable(IEMidiMapperApp Source/main.cpp)
-target_link_libraries(IEMidiMapperApp PUBLIC IEMidiMapperLib)
-
-# Set project include
-target_include_directories(IEMidiMapperLib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/Include)
+add_executable(EIEMidiMapper Source/main.cpp)
+target_link_libraries(EIEMidiMapper PUBLIC LIEMidiMapper)

@@ -415,13 +415,6 @@ void IERenderer_Vulkan::InitializeVulkanWindow(ImGui_ImplVulkanH_Window* wd, VkS
 void IERenderer_Vulkan::DinitializeVulkan()
 {
     vkDestroyDescriptorPool(m_VkDevice, m_VkDescriptorPool, m_VkAllocationCallback);
-
-#ifdef APP_USE_VULKAN_DEBUG_REPORT
-    // Remove the debug report callback
-    auto f_vkDestroyDebugReportCallbackEXT = (PFN_vkDestroyDebugReportCallbackEXT)vkGetInstanceProcAddr(g_Instance, "vkDestroyDebugReportCallbackEXT");
-    f_vkDestroyDebugReportCallbackEXT(g_Instance, g_DebugReport, g_Allocator);
-#endif // APP_USE_VULKAN_DEBUG_REPORT
-
     vkDestroyDevice(m_VkDevice, m_VkAllocationCallback);
     vkDestroyInstance(m_VkInstance, m_VkAllocationCallback);
 }
