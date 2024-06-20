@@ -1,7 +1,6 @@
 // Copyright © 2024 mozahzah (Incus Entertainment). All rights reserved.
 
 #include <cstdlib>
-#include <comdef.h>
 
 #include "imgui.h"
 
@@ -14,8 +13,13 @@ int main(int, char**)
     IEMidiMapper IEMidiMapperApp;
 
     std::filesystem::path ImGuiIniFile = std::filesystem::current_path().parent_path() / "Settings/IEMidiMapper_ImGui.ini";
-    ImGui::LoadIniSettingsFromDisk(IEUtils::ConvertToChar(ImGuiIniFile.c_str()).c_str());
 
+    const std::string test = IEUtils::StringCast<char>(ImGuiIniFile.c_str());
+    std::cout << test;std::cout << test;std::cout << test;std::cout << test;
+    //ImGui::LoadIniSettingsFromDisk(IEUtils::StringCast<char>(ImGuiIniFile.c_str()).c_str());
+
+    return 0;
+    
     IERenderer& Renderer = IEMidiMapperApp.GetRenderer();
     Renderer.Initialize();
 
