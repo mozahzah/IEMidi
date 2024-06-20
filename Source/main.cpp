@@ -6,11 +6,15 @@
 #include "imgui.h"
 
 #include "IEMidiMapper.h"
+#include "IEUtils.h"
 
 int main(int, char**)
 {
     // Init
     IEMidiMapper IEMidiMapperApp;
+
+    std::filesystem::path ImGuiIniFile = std::filesystem::current_path().parent_path() / "Settings/IEMidiMapper_ImGui.ini";
+    ImGui::LoadIniSettingsFromDisk(IEUtils::ConvertToChar(ImGuiIniFile.c_str()).c_str());
 
     IERenderer& Renderer = IEMidiMapperApp.GetRenderer();
     Renderer.Initialize();
@@ -30,8 +34,7 @@ int main(int, char**)
     ImFont *UbuntuMonoFont = io.Fonts->AddFontFromFileTTF((char*)UbuntuMonoFontPath.c_str(), 22.0f);
     io.Fonts->Build();
 
-    std::filesystem::path ImGuiIniFile = std::filesystem::current_path().parent_path() / "Settings/IEMidiMapper_ImGui.ini";
-    ImGui::LoadIniSettingsFromDisk((char*)ImGuiIniFile.c_str());
+  
     
     // Main loop
     while (!Renderer.IsAppWindowClosed())
