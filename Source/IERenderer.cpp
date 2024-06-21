@@ -4,9 +4,9 @@
 
 #include "IEUtils.h"
 
-bool IERenderer_Vulkan::Initialize()
+IEResult IERenderer_Vulkan::Initialize()
 {
-    bool bSuccess = false;
+    IEResult Result(IEResult::Type::Fail, "Failed to initialize IERenderer", __func__);
 
     glfwSetErrorCallback(&IERenderer_Vulkan::GlfwErrorCallbackFunc);
     if (glfwInit() && glfwVulkanSupported())
@@ -33,16 +33,67 @@ bool IERenderer_Vulkan::Initialize()
                     vkGetPhysicalDeviceSurfaceSupportKHR(m_VkPhysicalDevice, m_QueueFamilyIndex, m_AppWindowVulkanData.Surface, &PhysicalDeviceSurfaceSupport);
                     if (PhysicalDeviceSurfaceSupport == VK_TRUE)
                     {
-                        if (ImGuiContext* const CreatedImGuiContext = ImGui::CreateContext())
-                        {
-                            bSuccess = InitializeImGuiForVulkan();
-                        }
+                        Result.ResultType = IEResult::Type::Success;
+                        Result.Message = "Successfully initialized IERenderer.";
+                    }
+                    else
+                    {
+                        Result.ResultType = IEResult::Type::NotSupported;
+                        Result.Message = "Physical device is not supported.";
                     }
                 }
             }
         }
     }
-    return bSuccess;
+    return Result;
+}
+
+IEResult IERenderer_Vulkan::PostImGuiContextCreated()
+{
+    IEResult Result(IEResult::Type::Fail, "Failed to process post ImGuiContext created.", __func__);
+
+    const uint32_t SurfaceImageFormatCount = 4;
+    const VkFormat RequestSurfaceImageFormats[SurfaceImageFormatCount] = {  VK_FORMAT_B8G8R8A8_UNORM,
+                                                                            VK_FORMAT_R8G8B8A8_UNORM,
+                                                                            VK_FORMAT_B8G8R8_UNORM,
+                                                                            VK_FORMAT_R8G8B8_UNORM };
+    
+    const VkColorSpaceKHR RequestSurfaceColorSpace = VK_COLORSPACE_SRGB_NONLINEAR_KHR;
+    m_AppWindowVulkanData.SurfaceFormat = ImGui_ImplVulkanH_SelectSurfaceFormat(m_VkPhysicalDevice, m_AppWindowVulkanData.Surface,
+        RequestSurfaceImageFormats, SurfaceImageFormatCount, RequestSurfaceColorSpace);
+
+    VkPresentModeKHR PresentModeKHR = VK_PRESENT_MODE_FIFO_KHR;
+    m_AppWindowVulkanData.PresentMode = ImGui_ImplVulkanH_SelectPresentMode(m_VkPhysicalDevice, m_AppWindowVulkanData.Surface, &PresentModeKHR, 1);
+
+    ImGui_ImplVulkanH_CreateOrResizeWindow(m_VkInstance, m_VkPhysicalDevice, m_VkDevice, &m_AppWindowVulkanData, m_QueueFamilyIndex, m_VkAllocationCallback,
+        m_DefaultAppWindowWidth, m_DefaultAppWindowHeight, m_MinImageCount);
+
+    if (ImGui_ImplGlfw_InitForVulkan(m_AppWindow, true))
+    {
+        ImGui_ImplVulkan_InitInfo VulkanInitInfo = {};
+        VulkanInitInfo.Instance = m_VkInstance;
+        VulkanInitInfo.PhysicalDevice = m_VkPhysicalDevice;
+        VulkanInitInfo.Device = m_VkDevice;
+        VulkanInitInfo.QueueFamily = m_QueueFamilyIndex;
+        VulkanInitInfo.Queue = m_VkQueue;
+        VulkanInitInfo.PipelineCache = m_VkPipelineCache;
+        VulkanInitInfo.DescriptorPool = m_VkDescriptorPool;
+        VulkanInitInfo.RenderPass = m_AppWindowVulkanData.RenderPass;
+        VulkanInitInfo.Subpass = 0;
+        VulkanInitInfo.MinImageCount = m_MinImageCount;
+        VulkanInitInfo.ImageCount = m_AppWindowVulkanData.ImageCount;
+        VulkanInitInfo.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+        VulkanInitInfo.Allocator = m_VkAllocationCallback;
+        VulkanInitInfo.MinAllocationSize = 1024 * 1024;
+        VulkanInitInfo.UseDynamicRendering = false;
+        VulkanInitInfo.CheckVkResultFn = &IERenderer_Vulkan::CheckVkResultFunc;
+        if (ImGui_ImplVulkan_Init(&VulkanInitInfo)) 
+        {
+            Result.ResultType = IEResult::Type::Success;
+            Result.Message = "Successfully initialized ImGuiContext with vulkan.";
+        }     
+    }
+    return Result;
 }
 
 void IERenderer_Vulkan::Deinitialize()

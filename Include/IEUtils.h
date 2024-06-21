@@ -2,17 +2,9 @@
 
 #pragma once
 
-#include <cassert>
 #include <cwchar>
-#include <iostream>
 #include <string>
 #include <vector>
-
-inline bool IEAssert(bool Expression)
-{
-    assert(Expression);
-    return Expression;
-};
 
 namespace IEUtils
 {

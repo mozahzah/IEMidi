@@ -25,15 +25,18 @@
 #define APP_USE_VULKAN_DEBUG_REPORT
 #endif
 
+#include "IECore.h"
+
 class IERenderer
 {
 public:
     virtual ~IERenderer() = default;
 
 public:
-    virtual bool Initialize() {return false;};
+    virtual IEResult Initialize() { return IEResult(IEResult::Type::Unimplemented, "Unimplemented.", __func__); };
+    virtual IEResult PostImGuiContextCreated() { return IEResult(IEResult::Type::Unimplemented, "Unimplemented.", __func__); };
     virtual void Deinitialize() {};
-    virtual int32_t FlushGPUCommandsAndWait() {return -1;};
+    virtual int32_t FlushGPUCommandsAndWait() { return -1; };
 
     virtual bool IsAppWindowOpen() {return false;};
     virtual void PollEvents() {};
@@ -48,7 +51,8 @@ class IERenderer_Vulkan : public IERenderer
 {
 public:
     /* Begin IERenderer Implementation */
-    bool Initialize() override;
+    IEResult Initialize() override;
+    IEResult PostImGuiContextCreated() override;
     void Deinitialize() override;
     int32_t FlushGPUCommandsAndWait() override;
 
