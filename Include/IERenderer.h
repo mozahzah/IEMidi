@@ -33,10 +33,9 @@ public:
 public:
     virtual bool Initialize() {return false;};
     virtual void Deinitialize() {};
-    virtual void Cleanup() {};
     virtual int32_t FlushGPUCommandsAndWait() {return -1;};
 
-    virtual bool IsAppWindowClosed() {return true;};
+    virtual bool IsAppWindowOpen() {return false;};
     virtual void PollEvents() {};
     virtual void CheckAndResizeSwapChain() {};
 
@@ -48,16 +47,12 @@ public:
 class IERenderer_Vulkan : public IERenderer
 {
 public:
- 
-
-public:
     /* Begin IERenderer Implementation */
     bool Initialize() override;
     void Deinitialize() override;
-    void Cleanup() override;
     int32_t FlushGPUCommandsAndWait() override;
 
-    bool IsAppWindowClosed() override;
+    bool IsAppWindowOpen() override;
     void PollEvents() override;
     void CheckAndResizeSwapChain() override;
 
@@ -67,12 +62,13 @@ public:
     /* End IERenderer Implementation */
 
 private:
-    static void GlfwErrorCallback(int ErrorCode,const char* Description);
+    static void GlfwErrorCallbackFunc(int ErrorCode, const char* Description);
+    static void CheckVkResultFunc(VkResult err);
 
 private:
     bool InitializeVulkan(const std::vector<const char*>& RequiredInstanceExtensionNames);
     bool InitializeInstancePhysicalDevice();
-    bool InitializeVulkanWindow(ImGui_ImplVulkanH_Window* wd, VkSurfaceKHR surface, int width, int height);
+    bool InitializeImGuiForVulkan();
     void DinitializeVulkan();
 
 private:
@@ -91,4 +87,7 @@ private:
     uint32_t m_QueueFamilyIndex = static_cast<uint32_t>(-1);
     int m_MinImageCount = 2;
     bool m_SwapChainRebuild = false;
+
+    int32_t m_DefaultAppWindowWidth = 1280;
+    int32_t m_DefaultAppWindowHeight = 720;
 };

@@ -4,24 +4,15 @@
 
 #include "IEUtils.h"
 
-static void check_vk_result(VkResult err)
-{
-    if (err == 0)
-        return;
-    fprintf(stderr, "[vulkan] Error: VkResult = %d\n", err);
-    if (err < 0)
-        abort();
-}
-
 bool IERenderer_Vulkan::Initialize()
 {
     bool bSuccess = false;
 
-    glfwSetErrorCallback(&IERenderer_Vulkan::GlfwErrorCallback);
+    glfwSetErrorCallback(&IERenderer_Vulkan::GlfwErrorCallbackFunc);
     if (glfwInit() && glfwVulkanSupported())
     {
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-        m_AppWindow = glfwCreateWindow(1280, 720, "IEMidiMapper", nullptr, nullptr);
+        m_AppWindow = glfwCreateWindow(m_DefaultAppWindowWidth, m_DefaultAppWindowHeight, "IEMidiMapper", nullptr, nullptr);
         if (m_AppWindow)
         {
             uint32_t RequiredInstanceExtensionCount = 0;
@@ -34,37 +25,19 @@ bool IERenderer_Vulkan::Initialize()
 
             if (InitializeVulkan(RequiredInstanceExtensionNames))
             {
-                VkSurfaceKHR Surface = {};
-                if (glfwCreateWindowSurface(m_VkInstance, m_AppWindow, m_VkAllocationCallback, &Surface) == VkResult::VK_SUCCESS)
+                if (glfwCreateWindowSurface(m_VkInstance, m_AppWindow, m_VkAllocationCallback, &m_AppWindowVulkanData.Surface) == VkResult::VK_SUCCESS)
                 {
-                    int AppWindowWidth, AppWindowHeight;
-                    glfwGetFramebufferSize(m_AppWindow, &AppWindowWidth, &AppWindowHeight);
-                    InitializeVulkanWindow(&m_AppWindowVulkanData, Surface, AppWindowWidth, AppWindowHeight);
+                    glfwGetFramebufferSize(m_AppWindow, &m_DefaultAppWindowWidth, &m_DefaultAppWindowHeight);
 
-                    ImGui::CreateContext();
-                    ImGuiIO& IO = ImGui::GetIO();
-                    IO.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-                    ImGui::StyleColorsDark();
-
-                    // Setup Platform/Renderer backends
-                    ImGui_ImplGlfw_InitForVulkan(m_AppWindow, true);
-                    ImGui_ImplVulkan_InitInfo VulkanInitInfo;
-                    VulkanInitInfo.Instance = m_VkInstance;
-                    VulkanInitInfo.PhysicalDevice = m_VkPhysicalDevice;
-                    VulkanInitInfo.Device = m_VkDevice;
-                    VulkanInitInfo.QueueFamily = m_QueueFamilyIndex;
-                    VulkanInitInfo.Queue = m_VkQueue;
-                    VulkanInitInfo.PipelineCache = m_VkPipelineCache;
-                    VulkanInitInfo.DescriptorPool = m_VkDescriptorPool;
-                    VulkanInitInfo.RenderPass = m_AppWindowVulkanData.RenderPass;
-                    VulkanInitInfo.Subpass = 0;
-                    VulkanInitInfo.MinImageCount = m_MinImageCount;
-                    VulkanInitInfo.ImageCount = m_AppWindowVulkanData.ImageCount;
-                    VulkanInitInfo.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
-                    VulkanInitInfo.Allocator = m_VkAllocationCallback;
-                    VulkanInitInfo.MinAllocationSize = 1024 * 1024;
-                    VulkanInitInfo.CheckVkResultFn = check_vk_result;
-                    bSuccess = ImGui_ImplVulkan_Init(&VulkanInitInfo);
+                    VkBool32 PhysicalDeviceSurfaceSupport = false;
+                    vkGetPhysicalDeviceSurfaceSupportKHR(m_VkPhysicalDevice, m_QueueFamilyIndex, m_AppWindowVulkanData.Surface, &PhysicalDeviceSurfaceSupport);
+                    if (PhysicalDeviceSurfaceSupport == VK_TRUE)
+                    {
+                        if (ImGuiContext* const CreatedImGuiContext = ImGui::CreateContext())
+                        {
+                            bSuccess = InitializeImGuiForVulkan();
+                        }
+                    }
                 }
             }
         }
@@ -76,16 +49,12 @@ void IERenderer_Vulkan::Deinitialize()
 {
     ImGui_ImplVulkan_Shutdown();
     ImGui_ImplGlfw_Shutdown();
-}
 
-void IERenderer_Vulkan::Cleanup()
-{
+    ImGui::DestroyContext();
     ImGui_ImplVulkanH_DestroyWindow(m_VkInstance, m_VkDevice, &m_AppWindowVulkanData, m_VkAllocationCallback);
 
-    vkDestroyDescriptorPool(m_VkDevice, m_VkDescriptorPool, m_VkAllocationCallback);
-    vkDestroyDevice(m_VkDevice, m_VkAllocationCallback);
-    vkDestroyInstance(m_VkInstance, m_VkAllocationCallback);
-
+    DinitializeVulkan();
+    
     glfwDestroyWindow(m_AppWindow);
     glfwTerminate();
 }
@@ -95,18 +64,19 @@ int32_t IERenderer_Vulkan::FlushGPUCommandsAndWait()
     return vkDeviceWaitIdle(m_VkDevice);
 }
 
-bool IERenderer_Vulkan::IsAppWindowClosed()
+bool IERenderer_Vulkan::IsAppWindowOpen()
 {
+    bool bIsAppWindowOpen = false;
     if (m_AppWindow)
     {
-        return glfwWindowShouldClose(m_AppWindow);
+        bIsAppWindowOpen = !glfwWindowShouldClose(m_AppWindow);
     }
-    return false;
+    return bIsAppWindowOpen;
 }
 
 void IERenderer_Vulkan::PollEvents()
 {
-     glfwPollEvents();   
+    glfwPollEvents();
 }
 
 void IERenderer_Vulkan::CheckAndResizeSwapChain()
@@ -231,15 +201,25 @@ void IERenderer_Vulkan::PresentFrame()
     }
 }
 
-void IERenderer_Vulkan::GlfwErrorCallback(int ErrorCode, const char* Description)
+void IERenderer_Vulkan::CheckVkResultFunc(VkResult Result)
 {
-    if (ErrorCode)
+    if (Result != VkResult::VK_SUCCESS)
     {
-        std::printf("Glfw Error: %s", Description);
+        std::fprintf(stderr, "Vulkan Error: VkResult = %d\n", Result);
+        if (Result < 0)
+        {
+            abort();
+        }
     }
 }
 
-
+void IERenderer_Vulkan::GlfwErrorCallbackFunc(int ErrorCode, const char* Description)
+{
+    if (ErrorCode)
+    {
+        std::fprintf(stderr, "Glfw Error: ErrorCode = %d, Description: %s", ErrorCode, Description);
+    }
+}
 
 bool IERenderer_Vulkan::InitializeVulkan(const std::vector<const char*>& RequiredInstanceExtensionNames)
 {
@@ -261,15 +241,13 @@ bool IERenderer_Vulkan::InitializeVulkan(const std::vector<const char*>& Require
         InstanceCreateInfo.enabledExtensionCount = InstanceExtensionCount;
         InstanceCreateInfo.ppEnabledExtensionNames = InstanceExtensionNames.data();
 
-        auto it = std::find_if(
-        InstanceExtensionNames.begin(), 
-        InstanceExtensionNames.end(), 
-        [](const char* ext) { return strcmp(ext, VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME) == 0; }
-    );
-        
-        if (it != InstanceExtensionNames.end())
+        for (const char* InstanceExtensionName : InstanceExtensionNames)
         {
-            InstanceCreateInfo.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
+            if (std::strcmp(InstanceExtensionName, VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME) == 0)
+            {
+                InstanceCreateInfo.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
+                break;
+            }
         }
 
         if (vkCreateInstance(&InstanceCreateInfo, m_VkAllocationCallback, &m_VkInstance) == VkResult::VK_SUCCESS)
@@ -366,38 +344,48 @@ bool IERenderer_Vulkan::InitializeInstancePhysicalDevice()
     return m_VkPhysicalDevice != nullptr;
 }
 
-bool IERenderer_Vulkan::InitializeVulkanWindow(ImGui_ImplVulkanH_Window* wd, VkSurfaceKHR surface, int width, int height)
+bool IERenderer_Vulkan::InitializeImGuiForVulkan()
 {
-    m_AppWindowVulkanData.Surface = surface;
+    bool bSuccess = false;
 
-    // Check for WSI support
-    VkBool32 res;
-    vkGetPhysicalDeviceSurfaceSupportKHR(m_VkPhysicalDevice, m_QueueFamilyIndex, m_AppWindowVulkanData.Surface, &res);
-    if (res != VK_TRUE)
+    const uint32_t SurfaceImageFormatCount = 4;
+    const VkFormat RequestSurfaceImageFormats[SurfaceImageFormatCount] = {  VK_FORMAT_B8G8R8A8_UNORM,
+                                                                            VK_FORMAT_R8G8B8A8_UNORM,
+                                                                            VK_FORMAT_B8G8R8_UNORM,
+                                                                            VK_FORMAT_R8G8B8_UNORM };
+    
+    const VkColorSpaceKHR RequestSurfaceColorSpace = VK_COLORSPACE_SRGB_NONLINEAR_KHR;
+    m_AppWindowVulkanData.SurfaceFormat = ImGui_ImplVulkanH_SelectSurfaceFormat(m_VkPhysicalDevice, m_AppWindowVulkanData.Surface,
+        RequestSurfaceImageFormats, SurfaceImageFormatCount, RequestSurfaceColorSpace);
+
+    VkPresentModeKHR PresentModeKHR = VK_PRESENT_MODE_FIFO_KHR;
+    m_AppWindowVulkanData.PresentMode = ImGui_ImplVulkanH_SelectPresentMode(m_VkPhysicalDevice, m_AppWindowVulkanData.Surface, &PresentModeKHR, 1);
+
+    ImGui_ImplVulkanH_CreateOrResizeWindow(m_VkInstance, m_VkPhysicalDevice, m_VkDevice, &m_AppWindowVulkanData, m_QueueFamilyIndex, m_VkAllocationCallback,
+        m_DefaultAppWindowWidth, m_DefaultAppWindowHeight, m_MinImageCount);
+
+    if (ImGui_ImplGlfw_InitForVulkan(m_AppWindow, true))
     {
-        fprintf(stderr, "Error no WSI support on physical device 0\n");
-        exit(-1);
+        ImGui_ImplVulkan_InitInfo VulkanInitInfo = {};
+        VulkanInitInfo.Instance = m_VkInstance;
+        VulkanInitInfo.PhysicalDevice = m_VkPhysicalDevice;
+        VulkanInitInfo.Device = m_VkDevice;
+        VulkanInitInfo.QueueFamily = m_QueueFamilyIndex;
+        VulkanInitInfo.Queue = m_VkQueue;
+        VulkanInitInfo.PipelineCache = m_VkPipelineCache;
+        VulkanInitInfo.DescriptorPool = m_VkDescriptorPool;
+        VulkanInitInfo.RenderPass = m_AppWindowVulkanData.RenderPass;
+        VulkanInitInfo.Subpass = 0;
+        VulkanInitInfo.MinImageCount = m_MinImageCount;
+        VulkanInitInfo.ImageCount = m_AppWindowVulkanData.ImageCount;
+        VulkanInitInfo.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+        VulkanInitInfo.Allocator = m_VkAllocationCallback;
+        VulkanInitInfo.MinAllocationSize = 1024 * 1024;
+        VulkanInitInfo.UseDynamicRendering = false;
+        VulkanInitInfo.CheckVkResultFn = &IERenderer_Vulkan::CheckVkResultFunc;
+        bSuccess = ImGui_ImplVulkan_Init(&VulkanInitInfo);
     }
-
-    // Select Surface Format
-    const VkFormat requestSurfaceImageFormat[] = { VK_FORMAT_B8G8R8A8_UNORM, VK_FORMAT_R8G8B8A8_UNORM, VK_FORMAT_B8G8R8_UNORM, VK_FORMAT_R8G8B8_UNORM };
-    const VkColorSpaceKHR requestSurfaceColorSpace = VK_COLORSPACE_SRGB_NONLINEAR_KHR;
-    m_AppWindowVulkanData.SurfaceFormat = ImGui_ImplVulkanH_SelectSurfaceFormat(m_VkPhysicalDevice,   m_AppWindowVulkanData.Surface, requestSurfaceImageFormat, (size_t)IM_ARRAYSIZE(requestSurfaceImageFormat), requestSurfaceColorSpace);
-
-    // Select Present Mode
-#ifdef APP_USE_UNLIMITED_FRAME_RATE
-    VkPresentModeKHR present_modes[] = { VK_PRESENT_MODE_MAILBOX_KHR, VK_PRESENT_MODE_IMMEDIATE_KHR, VK_PRESENT_MODE_FIFO_KHR };
-#else
-    VkPresentModeKHR present_modes[] = { VK_PRESENT_MODE_FIFO_KHR };
-#endif
-    m_AppWindowVulkanData.PresentMode = ImGui_ImplVulkanH_SelectPresentMode(m_VkPhysicalDevice,   m_AppWindowVulkanData.Surface, &present_modes[0], IM_ARRAYSIZE(present_modes));
-    //printf("[vulkan] Selected PresentMode = %d\n",    m_AppWindowVulkanData.PresentMode);
-
-    // Create SwapChain, RenderPass, Framebuffer, etc.
-    IM_ASSERT(m_MinImageCount >= 2);
-    ImGui_ImplVulkanH_CreateOrResizeWindow(m_VkInstance, m_VkPhysicalDevice, m_VkDevice, wd, m_QueueFamilyIndex, m_VkAllocationCallback, width, height, m_MinImageCount);
-
-    return true;
+    return bSuccess;
 }
 
 void IERenderer_Vulkan::DinitializeVulkan()
