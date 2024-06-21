@@ -1,32 +1,56 @@
 // Copyright © 2024 mozahzah (Incus Entertainment). All rights reserved.
 
+#pragma once
+
+#include <cassert>
 #include <cwchar>
 #include <iostream>
 #include <string>
 #include <vector>
 
+inline bool IEAssert(bool Expression)
+{
+    assert(Expression);
+    return Expression;
+};
+
 namespace IEUtils
 {
-    template<typename FromCharType, typename ToCharType>
-    std::string StringCast(const FromCharType* String)
+    template<typename ToCharType, typename FromCharType>
+    struct StringCastImpl 
     {
-        std::cerr << "StringCast specialization not implemented!" << std::endl;
-        return std::string();
-    }
+        static std::basic_string<ToCharType> Cast(const FromCharType* String)
+        {
+            static_assert(sizeof(ToCharType) != sizeof(ToCharType), "StringCast specialization not implemented for this type combination.");
+            return std::basic_string<ToCharType>();
+        }
+    };
 
-    template<typename FromCharType, typename ToCharType>
-    std::string StringCast(const ToCharType* String)
+    template<typename CharType>
+    struct StringCastImpl<CharType, CharType> 
     {
-        return std::string(String);
-    }
+        static std::basic_string<CharType> Cast(const CharType* String) 
+        {
+            return std::basic_string<CharType>(String);
+        }
+    };
 
     template<>
-    std::string StringCast<wchar_t, char>(const wchar_t* String)
+    struct StringCastImpl<char, wchar_t> 
     {
-        std::mbstate_t State = std::mbstate_t();
-        size_t Size = std::wcsrtombs(nullptr, &String, 0, &State) + 1;
-        std::vector<char> Buffer(Size);
-        std::wcsrtombs(Buffer.data(), &String, Size, &State);
-        return std::string(Buffer.data());
+        static std::string Cast(const wchar_t* String) 
+        {
+            std::mbstate_t State = std::mbstate_t();
+            size_t Size = std::wcsrtombs(nullptr, &String, 0, &State) + 1;
+            std::vector<char> Buffer(Size);
+            std::wcsrtombs(Buffer.data(), &String, Size, &State);
+            return std::string(Buffer.data());
+        }
+    };
+
+    template<typename ToCharType, typename FromCharType>
+    std::basic_string<ToCharType> StringCast(const FromCharType* String) 
+    {
+        return StringCastImpl<ToCharType, FromCharType>::Cast(String);
     }
 }

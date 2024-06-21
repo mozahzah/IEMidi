@@ -2,75 +2,74 @@
 
 #include "IERenderer.h"
 
+#include "IEUtils.h"
+
+static void check_vk_result(VkResult err)
+{
+    if (err == 0)
+        return;
+    fprintf(stderr, "[vulkan] Error: VkResult = %d\n", err);
+    if (err < 0)
+        abort();
+}
+
 bool IERenderer_Vulkan::Initialize()
 {
-    glfwSetErrorCallback([](int,const char* m)
-    {
-        printf("%s", m);
-    });
-    if (!glfwInit())
-        return 1;
+    bool bSuccess = false;
 
-    // Create window with Vulkan context
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    GLFWwindow* Window = glfwCreateWindow(1280, 720, "Dear ImGui GLFW+Vulkan example", nullptr, nullptr);
-    if (!glfwVulkanSupported())
+    glfwSetErrorCallback(&IERenderer_Vulkan::GlfwErrorCallback);
+    if (glfwInit() && glfwVulkanSupported())
     {
-        printf("GLFW: Vulkan Not Supported\n");
-        return 1;
+        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+        m_AppWindow = glfwCreateWindow(1280, 720, "IEMidiMapper", nullptr, nullptr);
+        if (m_AppWindow)
+        {
+            uint32_t RequiredInstanceExtensionCount = 0;
+            const char** GlfwExtensions = glfwGetRequiredInstanceExtensions(&RequiredInstanceExtensionCount);
+            std::vector<const char*> RequiredInstanceExtensionNames(RequiredInstanceExtensionCount);
+            for (int i =  0; i < RequiredInstanceExtensionCount; i++ )
+            {
+                RequiredInstanceExtensionNames[i] = GlfwExtensions[i];
+            }
+
+            if (InitializeVulkan(RequiredInstanceExtensionNames))
+            {
+                VkSurfaceKHR Surface = {};
+                if (glfwCreateWindowSurface(m_VkInstance, m_AppWindow, m_VkAllocationCallback, &Surface) == VkResult::VK_SUCCESS)
+                {
+                    int AppWindowWidth, AppWindowHeight;
+                    glfwGetFramebufferSize(m_AppWindow, &AppWindowWidth, &AppWindowHeight);
+                    InitializeVulkanWindow(&m_AppWindowVulkanData, Surface, AppWindowWidth, AppWindowHeight);
+
+                    ImGui::CreateContext();
+                    ImGuiIO& IO = ImGui::GetIO();
+                    IO.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+                    ImGui::StyleColorsDark();
+
+                    // Setup Platform/Renderer backends
+                    ImGui_ImplGlfw_InitForVulkan(m_AppWindow, true);
+                    ImGui_ImplVulkan_InitInfo VulkanInitInfo;
+                    VulkanInitInfo.Instance = m_VkInstance;
+                    VulkanInitInfo.PhysicalDevice = m_VkPhysicalDevice;
+                    VulkanInitInfo.Device = m_VkDevice;
+                    VulkanInitInfo.QueueFamily = m_QueueFamilyIndex;
+                    VulkanInitInfo.Queue = m_VkQueue;
+                    VulkanInitInfo.PipelineCache = m_VkPipelineCache;
+                    VulkanInitInfo.DescriptorPool = m_VkDescriptorPool;
+                    VulkanInitInfo.RenderPass = m_AppWindowVulkanData.RenderPass;
+                    VulkanInitInfo.Subpass = 0;
+                    VulkanInitInfo.MinImageCount = m_MinImageCount;
+                    VulkanInitInfo.ImageCount = m_AppWindowVulkanData.ImageCount;
+                    VulkanInitInfo.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+                    VulkanInitInfo.Allocator = m_VkAllocationCallback;
+                    VulkanInitInfo.MinAllocationSize = 1024 * 1024;
+                    VulkanInitInfo.CheckVkResultFn = check_vk_result;
+                    bSuccess = ImGui_ImplVulkan_Init(&VulkanInitInfo);
+                }
+            }
+        }
     }
-
-    std::vector<const char*> Extensions;
-    uint32_t extensions_count = 0;
-    const char** glfw_extensions = glfwGetRequiredInstanceExtensions(&extensions_count);
-    for (uint32_t i = 0; i < extensions_count; i++)
-    {
-        Extensions.push_back(glfw_extensions[i]);
-    }
-    
-    InitializeVulkan(Extensions);
-
-    // Create Window Surface
-    VkSurfaceKHR Surface;
-    VkResult err = glfwCreateWindowSurface(m_VkInstance, Window, m_VkAllocationCallback, &Surface);
-    //check_vk_result(err);
-
-    // Create Framebuffers
-    int w, h;
-    glfwGetFramebufferSize(Window, &w, &h);
-    ImGui_ImplVulkanH_Window* wd = &m_AppWindowVulkanData;
-    InitializeVulkanWindow(wd, Surface, w, h);
-
-    // Setup Dear ImGui context
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO(); (void)io;
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-
-    // Setup Dear ImGui style
-    ImGui::StyleColorsDark();
-
-    // Setup Platform/Renderer backends
-    ImGui_ImplGlfw_InitForVulkan(Window, true);
-    ImGui_ImplVulkan_InitInfo init_info = {};
-    init_info.Instance = m_VkInstance;
-    init_info.PhysicalDevice = m_VkPhysicalDevice;
-    init_info.Device = m_VkDevice;
-    init_info.QueueFamily = m_QueueFamily;
-    init_info.Queue = m_VkQueue;
-    init_info.PipelineCache = m_VkPipelineCache;
-    init_info.DescriptorPool = m_VkDescriptorPool;
-    init_info.RenderPass =  m_AppWindowVulkanData.RenderPass;
-    init_info.Subpass = 0;
-    init_info.MinImageCount = m_MinImageCount;
-    init_info.ImageCount =  m_AppWindowVulkanData.ImageCount;
-    init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
-    init_info.Allocator = m_VkAllocationCallback;
-    //init_info.CheckVkResultFn = check_vk_result;
-    ImGui_ImplVulkan_Init(&init_info);
-
-    return true;
+    return bSuccess;
 }
 
 void IERenderer_Vulkan::Deinitialize()
@@ -98,11 +97,16 @@ int32_t IERenderer_Vulkan::FlushGPUCommandsAndWait()
 
 bool IERenderer_Vulkan::IsAppWindowClosed()
 {
+    if (m_AppWindow)
+    {
+        return glfwWindowShouldClose(m_AppWindow);
+    }
     return false;
 }
 
 void IERenderer_Vulkan::PollEvents()
 {
+     glfwPollEvents();   
 }
 
 void IERenderer_Vulkan::CheckAndResizeSwapChain()
@@ -117,7 +121,7 @@ void IERenderer_Vulkan::CheckAndResizeSwapChain()
     {
         ImGui_ImplVulkan_SetMinImageCount(m_MinImageCount);
         ImGui_ImplVulkanH_CreateOrResizeWindow(m_VkInstance, m_VkPhysicalDevice,
-            m_VkDevice, &m_AppWindowVulkanData, m_QueueFamily, m_VkAllocationCallback,
+            m_VkDevice, &m_AppWindowVulkanData, m_QueueFamilyIndex, m_VkAllocationCallback,
             FrameBufferWidth, FrameBufferHeight, m_MinImageCount);
         
         m_AppWindowVulkanData.FrameIndex = 0;
@@ -222,171 +226,153 @@ void IERenderer_Vulkan::PresentFrame()
         }
         else
         {
-            m_AppWindowVulkanData.SemaphoreIndex = m_AppWindowVulkanData.SemaphoreIndex + 1 % m_AppWindowVulkanData.SemaphoreCount;
+            m_AppWindowVulkanData.SemaphoreIndex = (m_AppWindowVulkanData.SemaphoreIndex + 1) % m_AppWindowVulkanData.SemaphoreCount;
         }
     }
 }
 
-VkPhysicalDevice IERenderer_Vulkan::SetupVulkan_SelectPhysicalDevice()
+void IERenderer_Vulkan::GlfwErrorCallback(int ErrorCode, const char* Description)
 {
-    uint32_t GPUCount;
-    VkResult Result = vkEnumeratePhysicalDevices(m_VkInstance, &GPUCount, nullptr);
-    //check_vk_result(err);
-    IM_ASSERT(GPUCount > 0);
-
-    std::vector<VkPhysicalDevice> GPUs;
-
-    Result = vkEnumeratePhysicalDevices(m_VkInstance, &GPUCount, GPUs.data());
-    //check_vk_result(err);
-
-    for (VkPhysicalDevice& GPU : GPUs)
+    if (ErrorCode)
     {
-        VkPhysicalDeviceProperties PhysicalDeviceProperties;
-        vkGetPhysicalDeviceProperties(GPU, &PhysicalDeviceProperties);
-        if (PhysicalDeviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
-        {
-            return GPU;
-        }
+        std::printf("Glfw Error: %s", Description);
     }
-
-    // Use first GPU (Integrated) is a Discrete one is not available.
-    if (GPUCount > 0)
-    {
-        return GPUs[0];
-    }   
-    return nullptr;
 }
 
-bool IERenderer_Vulkan::IsExtensionAvailable(const std::vector<VkExtensionProperties>& ExtensionProperties, const char* ExtensionName)
+
+
+bool IERenderer_Vulkan::InitializeVulkan(const std::vector<const char*>& RequiredInstanceExtensionNames)
 {
-    for (const VkExtensionProperties& ExtensionPropertie : ExtensionProperties)
+    bool bSuccess = false;
+
+    uint32_t InstanceExtensionCount = 0;
+    vkEnumerateInstanceExtensionProperties(nullptr, &InstanceExtensionCount, nullptr);
+    std::vector<VkExtensionProperties> InstanceExtensionProperties(InstanceExtensionCount);
+    if (vkEnumerateInstanceExtensionProperties(nullptr, &InstanceExtensionCount, InstanceExtensionProperties.data()) == VkResult::VK_SUCCESS)
     {
-        if (strcmp(ExtensionPropertie.extensionName, ExtensionName) == 0)
+        std::vector<const char*> InstanceExtensionNames(InstanceExtensionCount);
+        for (int i =  0; i < InstanceExtensionCount; i++ )
         {
-            return true;
+            InstanceExtensionNames[i] = InstanceExtensionProperties[i].extensionName;
         }
-    }  
-    return false;
-}
 
-void IERenderer_Vulkan::InitializeVulkan(std::vector<const char*>& InstanceExtensions)
-{
-        VkResult err;
-#ifdef IMGUI_IMPL_VULKAN_USE_VOLK
-    volkInitialize();
-#endif
+        VkInstanceCreateInfo InstanceCreateInfo = {};
+        InstanceCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+        InstanceCreateInfo.enabledExtensionCount = InstanceExtensionCount;
+        InstanceCreateInfo.ppEnabledExtensionNames = InstanceExtensionNames.data();
 
-    // Create Vulkan Instance
-    {
-        VkInstanceCreateInfo create_info = {};
-        create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-
-        // Enumerate available extensions
-        uint32_t ExtensionPropertiesCount = 0;
-        std::vector<VkExtensionProperties> ExtensionProperties;
-        vkEnumerateInstanceExtensionProperties(nullptr, &ExtensionPropertiesCount, nullptr);
-        ExtensionProperties.resize(ExtensionPropertiesCount);
-        err = vkEnumerateInstanceExtensionProperties(nullptr, &ExtensionPropertiesCount, ExtensionProperties.data());
-        //check_vk_result(err);
-
-        // Enable required extensions
-        if (IsExtensionAvailable(ExtensionProperties, VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME))
-            InstanceExtensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
-#ifdef VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME
-        if (IsExtensionAvailable(ExtensionProperties, VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME))
+        auto it = std::find_if(
+        InstanceExtensionNames.begin(), 
+        InstanceExtensionNames.end(), 
+        [](const char* ext) { return strcmp(ext, VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME) == 0; }
+    );
+        
+        if (it != InstanceExtensionNames.end())
         {
-            InstanceExtensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
-            create_info.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
+            InstanceCreateInfo.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
         }
-#endif
-        // Create Vulkan Instance
-        create_info.enabledExtensionCount = InstanceExtensions.size();
-        create_info.ppEnabledExtensionNames = InstanceExtensions.data();
-        err = vkCreateInstance(&create_info, m_VkAllocationCallback, &m_VkInstance);
-        //check_vk_result(err);
-#ifdef IMGUI_IMPL_VULKAN_USE_VOLK
-        volkLoadInstance(g_Instance);
-#endif
-    }
 
-    // Select Physical Device (GPU)
-    m_VkPhysicalDevice = SetupVulkan_SelectPhysicalDevice();
-
-    // Select graphics queue family
-    {
-        uint32_t count;
-        vkGetPhysicalDeviceQueueFamilyProperties(m_VkPhysicalDevice, &count, nullptr);
-        VkQueueFamilyProperties* queues = (VkQueueFamilyProperties*)malloc(sizeof(VkQueueFamilyProperties) * count);
-        vkGetPhysicalDeviceQueueFamilyProperties(m_VkPhysicalDevice, &count, queues);
-        for (uint32_t i = 0; i < count; i++)
-            if (queues[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)
+        if (vkCreateInstance(&InstanceCreateInfo, m_VkAllocationCallback, &m_VkInstance) == VkResult::VK_SUCCESS)
+        {
+            if (InitializeInstancePhysicalDevice())
             {
-                m_QueueFamily = i;
+                uint32_t QueueFamilyCount = 0;
+                vkGetPhysicalDeviceQueueFamilyProperties(m_VkPhysicalDevice, &QueueFamilyCount, nullptr);
+                std::vector<VkQueueFamilyProperties> QueueFamilyProperties(QueueFamilyCount);
+                vkGetPhysicalDeviceQueueFamilyProperties(m_VkPhysicalDevice, &QueueFamilyCount, QueueFamilyProperties.data());
+
+                m_QueueFamilyIndex = static_cast<uint32_t>(-1);
+                for (uint32_t i = 0; i < QueueFamilyCount; i++)
+                {
+                    if (QueueFamilyProperties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)
+                    {
+                        m_QueueFamilyIndex = i;
+                        break;
+                    }
+                }
+
+                if (m_QueueFamilyIndex != -1)
+                {
+                    uint32_t DeviceExtensionCount = 0;
+                    vkEnumerateDeviceExtensionProperties(m_VkPhysicalDevice, nullptr, &DeviceExtensionCount, nullptr);
+                    std::vector<VkExtensionProperties> DeviceExtensionProperties(DeviceExtensionCount);
+                    vkEnumerateDeviceExtensionProperties(m_VkPhysicalDevice, nullptr, &DeviceExtensionCount, DeviceExtensionProperties.data());
+
+                    std::vector<const char*> DeviceExtensionNames(DeviceExtensionCount);
+                    for (int i =  0; i < DeviceExtensionCount; i++ )
+                    {
+                        DeviceExtensionNames[i] = DeviceExtensionProperties[i].extensionName;
+                    }
+
+                    VkDeviceQueueCreateInfo DeviceQueueCreateInfo = {};
+                    DeviceQueueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+                    DeviceQueueCreateInfo.queueFamilyIndex = m_QueueFamilyIndex;
+                    DeviceQueueCreateInfo.queueCount = 1;
+                    float QueuePriority = 1.0f;
+                    DeviceQueueCreateInfo.pQueuePriorities = &QueuePriority;
+
+                    VkDeviceCreateInfo DeviceCreateInfo = {};
+                    DeviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+                    DeviceCreateInfo.queueCreateInfoCount = 1;
+                    DeviceCreateInfo.pQueueCreateInfos = &DeviceQueueCreateInfo;
+                    DeviceCreateInfo.enabledExtensionCount = (uint32_t)DeviceExtensionCount;
+                    DeviceCreateInfo.ppEnabledExtensionNames = DeviceExtensionNames.data();
+
+                    if (vkCreateDevice(m_VkPhysicalDevice, &DeviceCreateInfo, m_VkAllocationCallback, &m_VkDevice) == VkResult::VK_SUCCESS)
+                    {
+                        vkGetDeviceQueue(m_VkDevice, m_QueueFamilyIndex, 0, &m_VkQueue);
+                
+                        VkDescriptorPoolCreateInfo DescriptorPoolCreateInfo = {};
+                        DescriptorPoolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+                        DescriptorPoolCreateInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+                        DescriptorPoolCreateInfo.maxSets = 1;
+                        DescriptorPoolCreateInfo.poolSizeCount = 1;
+
+                        VkDescriptorPoolSize DescriptorPoolSize = {};
+                        DescriptorPoolSize.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+                        DescriptorPoolSize.descriptorCount = 1;
+
+                        DescriptorPoolCreateInfo.pPoolSizes = &DescriptorPoolSize;
+
+                        bSuccess = vkCreateDescriptorPool(m_VkDevice, &DescriptorPoolCreateInfo, m_VkAllocationCallback, &m_VkDescriptorPool) == VkResult::VK_SUCCESS;
+                    }
+                }
+            }
+        }
+    }
+    return bSuccess;
+}
+
+bool IERenderer_Vulkan::InitializeInstancePhysicalDevice()
+{
+    uint32_t PhysicalDeviceCount = 0;
+    vkEnumeratePhysicalDevices(m_VkInstance, &PhysicalDeviceCount, nullptr);
+    std::vector<VkPhysicalDevice> PhysicalDevices(PhysicalDeviceCount);
+    if (vkEnumeratePhysicalDevices(m_VkInstance, &PhysicalDeviceCount, PhysicalDevices.data()) == VkResult::VK_SUCCESS)
+    {
+        m_VkPhysicalDevice = PhysicalDevices[0];
+        for (VkPhysicalDevice& PhysicalDevice : PhysicalDevices)
+        {
+            VkPhysicalDeviceProperties PhysicalDeviceProperties;
+            vkGetPhysicalDeviceProperties(PhysicalDevice, &PhysicalDeviceProperties);
+
+            if (PhysicalDeviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
+            {
+                m_VkPhysicalDevice = PhysicalDevice;
                 break;
             }
-        free(queues);
-        IM_ASSERT(m_QueueFamily != (uint32_t)-1);
+        }
     }
-
-    // Create Logical Device (with 1 queue)
-    {
-        ImVector<const char*> device_extensions;
-        device_extensions.push_back("VK_KHR_swapchain");
-
-        // Enumerate physical device extension
-        uint32_t properties_count;
-        ImVector<VkExtensionProperties> properties;
-        vkEnumerateDeviceExtensionProperties(m_VkPhysicalDevice, nullptr, &properties_count, nullptr);
-        properties.resize(properties_count);
-        vkEnumerateDeviceExtensionProperties(m_VkPhysicalDevice, nullptr, &properties_count, properties.Data);
-#ifdef VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME
-        if (IsExtensionAvailable(properties, VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME))
-            device_extensions.push_back(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME);
-#endif
-
-        const float queue_priority[] = { 1.0f };
-        VkDeviceQueueCreateInfo queue_info[1] = {};
-        queue_info[0].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-        queue_info[0].queueFamilyIndex = m_QueueFamily;
-        queue_info[0].queueCount = 1;
-        queue_info[0].pQueuePriorities = queue_priority;
-        VkDeviceCreateInfo create_info = {};
-        create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-        create_info.queueCreateInfoCount = sizeof(queue_info) / sizeof(queue_info[0]);
-        create_info.pQueueCreateInfos = queue_info;
-        create_info.enabledExtensionCount = (uint32_t)device_extensions.Size;
-        create_info.ppEnabledExtensionNames = device_extensions.Data;
-        err = vkCreateDevice(m_VkPhysicalDevice, &create_info, m_VkAllocationCallback, &m_VkDevice);
-        //check_vk_result(err);
-        vkGetDeviceQueue(m_VkDevice, m_QueueFamily, 0, &m_VkQueue);
-    }
-
-    // Create Descriptor Pool
-    // The example only requires a single combined image sampler descriptor for the font image and only uses one descriptor set (for that)
-    // If you wish to load e.g. additional textures you may need to alter pools sizes.
-    {
-        VkDescriptorPoolSize pool_sizes[] =
-        {
-            { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1 },
-        };
-        VkDescriptorPoolCreateInfo pool_info = {};
-        pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-        pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
-        pool_info.maxSets = 1;
-        pool_info.poolSizeCount = (uint32_t)IM_ARRAYSIZE(pool_sizes);
-        pool_info.pPoolSizes = pool_sizes;
-        err = vkCreateDescriptorPool(m_VkDevice, &pool_info, m_VkAllocationCallback, &m_VkDescriptorPool);
-        //check_vk_result(err);
-    }
+    return m_VkPhysicalDevice != nullptr;
 }
 
-void IERenderer_Vulkan::InitializeVulkanWindow(ImGui_ImplVulkanH_Window* wd, VkSurfaceKHR surface, int width, int height)
+bool IERenderer_Vulkan::InitializeVulkanWindow(ImGui_ImplVulkanH_Window* wd, VkSurfaceKHR surface, int width, int height)
 {
     m_AppWindowVulkanData.Surface = surface;
 
     // Check for WSI support
     VkBool32 res;
-    vkGetPhysicalDeviceSurfaceSupportKHR(m_VkPhysicalDevice, m_QueueFamily, m_AppWindowVulkanData.Surface, &res);
+    vkGetPhysicalDeviceSurfaceSupportKHR(m_VkPhysicalDevice, m_QueueFamilyIndex, m_AppWindowVulkanData.Surface, &res);
     if (res != VK_TRUE)
     {
         fprintf(stderr, "Error no WSI support on physical device 0\n");
@@ -409,7 +395,9 @@ void IERenderer_Vulkan::InitializeVulkanWindow(ImGui_ImplVulkanH_Window* wd, VkS
 
     // Create SwapChain, RenderPass, Framebuffer, etc.
     IM_ASSERT(m_MinImageCount >= 2);
-    ImGui_ImplVulkanH_CreateOrResizeWindow(m_VkInstance, m_VkPhysicalDevice, m_VkDevice, wd, m_QueueFamily, m_VkAllocationCallback, width, height, m_MinImageCount);
+    ImGui_ImplVulkanH_CreateOrResizeWindow(m_VkInstance, m_VkPhysicalDevice, m_VkDevice, wd, m_QueueFamilyIndex, m_VkAllocationCallback, width, height, m_MinImageCount);
+
+    return true;
 }
 
 void IERenderer_Vulkan::DinitializeVulkan()
