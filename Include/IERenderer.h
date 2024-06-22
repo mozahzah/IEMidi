@@ -33,8 +33,8 @@ public:
     virtual ~IERenderer() = default;
 
 public:
-    virtual IEResult Initialize() { return IEResult(IEResult::Type::Unimplemented, "Unimplemented.", __func__); };
-    virtual IEResult PostImGuiContextCreated() { return IEResult(IEResult::Type::Unimplemented, "Unimplemented.", __func__); };
+    virtual IEResult Initialize() { return IEResult(IEResult::Type::Unimplemented, "Unimplemented."); };
+    virtual IEResult PostImGuiContextCreated() { return IEResult(IEResult::Type::Unimplemented, "Unimplemented."); };
     virtual void Deinitialize() {};
     virtual int32_t FlushGPUCommandsAndWait() { return -1; };
 
@@ -70,9 +70,8 @@ private:
     static void CheckVkResultFunc(VkResult err);
 
 private:
-    bool InitializeVulkan(const std::vector<const char*>& RequiredInstanceExtensionNames);
-    bool InitializeInstancePhysicalDevice();
-    bool InitializeImGuiForVulkan();
+    IEResult InitializeVulkan(const std::vector<const char*>& RequiredInstanceExtensionNames);
+    IEResult InitializeInstancePhysicalDevice();
     void DinitializeVulkan();
 
 private:

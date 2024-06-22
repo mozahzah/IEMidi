@@ -6,7 +6,7 @@
 
 IEResult IERenderer_Vulkan::Initialize()
 {
-    IEResult Result(IEResult::Type::Fail, "Failed to initialize IERenderer", __func__);
+    IEResult Result(IEResult::Type::Fail, "Failed to initialize IERenderer");
 
     glfwSetErrorCallback(&IERenderer_Vulkan::GlfwErrorCallbackFunc);
     if (glfwInit() && glfwVulkanSupported())
@@ -34,12 +34,12 @@ IEResult IERenderer_Vulkan::Initialize()
                     if (PhysicalDeviceSurfaceSupport == VK_TRUE)
                     {
                         Result.ResultType = IEResult::Type::Success;
-                        Result.Message = "Successfully initialized IERenderer.";
+                        Result.Message = "Successfully initialized IERenderer";
                     }
                     else
                     {
                         Result.ResultType = IEResult::Type::NotSupported;
-                        Result.Message = "Physical device is not supported.";
+                        Result.Message = "Physical device is not supported";
                     }
                 }
             }
@@ -50,7 +50,7 @@ IEResult IERenderer_Vulkan::Initialize()
 
 IEResult IERenderer_Vulkan::PostImGuiContextCreated()
 {
-    IEResult Result(IEResult::Type::Fail, "Failed to process post ImGuiContext created.", __func__);
+    IEResult Result(IEResult::Type::Fail, "Failed to initialize ImGuiContext with Vulkan");
 
     const uint32_t SurfaceImageFormatCount = 4;
     const VkFormat RequestSurfaceImageFormats[SurfaceImageFormatCount] = {  VK_FORMAT_B8G8R8A8_UNORM,
@@ -90,7 +90,7 @@ IEResult IERenderer_Vulkan::PostImGuiContextCreated()
         if (ImGui_ImplVulkan_Init(&VulkanInitInfo)) 
         {
             Result.ResultType = IEResult::Type::Success;
-            Result.Message = "Successfully initialized ImGuiContext with vulkan.";
+            Result.Message = "Successfully initialized ImGuiContext with Vulkan";
         }     
     }
     return Result;
@@ -161,16 +161,15 @@ void IERenderer_Vulkan::RenderFrame(ImDrawData& DrawData)
     const bool bIsMinimized = (DrawData.DisplaySize.x <= 0.0f || DrawData.DisplaySize.y <= 0.0f);
     if (!bIsMinimized)
     {
-        ImVec4 AppWindowColor;
-        m_AppWindowVulkanData.ClearValue.color.float32[0] = AppWindowColor.x * AppWindowColor.w;
-        m_AppWindowVulkanData.ClearValue.color.float32[1] = AppWindowColor.y * AppWindowColor.w;
-        m_AppWindowVulkanData.ClearValue.color.float32[2] = AppWindowColor.z * AppWindowColor.w;
-        m_AppWindowVulkanData.ClearValue.color.float32[3] = AppWindowColor.w;
+        m_AppWindowVulkanData.ClearValue.color.float32[0] = 0;
+        m_AppWindowVulkanData.ClearValue.color.float32[1] = 0;
+        m_AppWindowVulkanData.ClearValue.color.float32[2] = 0;
+        m_AppWindowVulkanData.ClearValue.color.float32[3] = 0;
 
-        VkSemaphore image_acquired_semaphore  = m_AppWindowVulkanData.FrameSemaphores[m_AppWindowVulkanData.SemaphoreIndex].ImageAcquiredSemaphore;
-        VkSemaphore render_complete_semaphore = m_AppWindowVulkanData.FrameSemaphores[m_AppWindowVulkanData.SemaphoreIndex].RenderCompleteSemaphore;
+        VkSemaphore ImageAcquiredSemaphore  = m_AppWindowVulkanData.FrameSemaphores[m_AppWindowVulkanData.SemaphoreIndex].ImageAcquiredSemaphore;
+        VkSemaphore RenderCompleteSemaphore = m_AppWindowVulkanData.FrameSemaphores[m_AppWindowVulkanData.SemaphoreIndex].RenderCompleteSemaphore;
     
-        VkResult Result = vkAcquireNextImageKHR(m_VkDevice, m_AppWindowVulkanData.Swapchain, UINT64_MAX, image_acquired_semaphore, VK_NULL_HANDLE, &m_AppWindowVulkanData.FrameIndex);
+        const VkResult Result = vkAcquireNextImageKHR(m_VkDevice, m_AppWindowVulkanData.Swapchain, UINT64_MAX, ImageAcquiredSemaphore, VK_NULL_HANDLE, &m_AppWindowVulkanData.FrameIndex);
         if (Result == VK_ERROR_OUT_OF_DATE_KHR || Result == VK_SUBOPTIMAL_KHR)
         {
             m_SwapChainRebuild = true;
@@ -178,51 +177,49 @@ void IERenderer_Vulkan::RenderFrame(ImDrawData& DrawData)
         }
 
         ImGui_ImplVulkanH_Frame& VulkanFrame = m_AppWindowVulkanData.Frames[m_AppWindowVulkanData.FrameIndex];
+        if (vkWaitForFences(m_VkDevice, 1, &VulkanFrame.Fence, VK_TRUE, UINT64_MAX) == VkResult::VK_SUCCESS)
+        {
+            CheckVkResultFunc(Result);
+            if (vkResetFences(m_VkDevice, 1, &VulkanFrame.Fence) == VkResult::VK_SUCCESS)
+            {
+                vkResetCommandPool(m_VkDevice, VulkanFrame.CommandPool, 0);   
+            }
+        }
         
-        Result = vkWaitForFences(m_VkDevice, 1, &VulkanFrame.Fence, VK_TRUE, UINT64_MAX);    // wait indefinitely instead of periodically checking
-        //check_vk_result(err);
-        Result = vkResetFences(m_VkDevice, 1, &VulkanFrame.Fence);
-        //check_vk_result(err);
-        Result = vkResetCommandPool(m_VkDevice, VulkanFrame.CommandPool, 0);
-        //check_vk_result(err);
-
         VkCommandBufferBeginInfo CommandBufferBeginInfo = {};
         CommandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
         CommandBufferBeginInfo.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-        Result = vkBeginCommandBuffer(VulkanFrame.CommandBuffer, &CommandBufferBeginInfo);
-        // check err
-    
-        VkRenderPassBeginInfo RenderPassBeginInfo = {};
-        RenderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-        RenderPassBeginInfo.renderPass =   m_AppWindowVulkanData.RenderPass;
-        RenderPassBeginInfo.framebuffer = VulkanFrame.Framebuffer;
-        RenderPassBeginInfo.renderArea.extent.width =  m_AppWindowVulkanData.Width;
-        RenderPassBeginInfo.renderArea.extent.height = m_AppWindowVulkanData.Height;
-        RenderPassBeginInfo.clearValueCount = 1;
-        RenderPassBeginInfo.pClearValues = &m_AppWindowVulkanData.ClearValue;
-        vkCmdBeginRenderPass(VulkanFrame.CommandBuffer, &RenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-        
-        // Record dear imgui primitives into command buffer
-        ImGui_ImplVulkan_RenderDrawData(&DrawData, VulkanFrame.CommandBuffer);
+        if (vkBeginCommandBuffer(VulkanFrame.CommandBuffer, &CommandBufferBeginInfo) == VkResult::VK_SUCCESS)
+        {
+            VkRenderPassBeginInfo RenderPassBeginInfo = {};
+            RenderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+            RenderPassBeginInfo.renderPass = m_AppWindowVulkanData.RenderPass;
+            RenderPassBeginInfo.framebuffer = VulkanFrame.Framebuffer;
+            RenderPassBeginInfo.renderArea.extent.width = m_AppWindowVulkanData.Width;
+            RenderPassBeginInfo.renderArea.extent.height = m_AppWindowVulkanData.Height;
+            RenderPassBeginInfo.clearValueCount = 1;
+            RenderPassBeginInfo.pClearValues = &m_AppWindowVulkanData.ClearValue;
 
-        // Submit command buffer
-        vkCmdEndRenderPass(VulkanFrame.CommandBuffer);
-        
-        VkPipelineStageFlags PipelineStageFlags = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-        VkSubmitInfo SubmitInfo = {};
-        SubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-        SubmitInfo.waitSemaphoreCount = 1;
-        SubmitInfo.pWaitSemaphores = &image_acquired_semaphore;
-        SubmitInfo.pWaitDstStageMask = &PipelineStageFlags;
-        SubmitInfo.commandBufferCount = 1;
-        SubmitInfo.pCommandBuffers = &VulkanFrame.CommandBuffer;
-        SubmitInfo.signalSemaphoreCount = 1;
-        SubmitInfo.pSignalSemaphores = &render_complete_semaphore;
+            vkCmdBeginRenderPass(VulkanFrame.CommandBuffer, &RenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+            ImGui_ImplVulkan_RenderDrawData(&DrawData, VulkanFrame.CommandBuffer);
+            vkCmdEndRenderPass(VulkanFrame.CommandBuffer);
 
-        Result = vkEndCommandBuffer(VulkanFrame.CommandBuffer);
-        //check_vk_result(err);
-        Result = vkQueueSubmit(m_VkQueue, 1, &SubmitInfo, VulkanFrame.Fence);
-        //check_vk_result(err);
+            VkPipelineStageFlags PipelineStageFlags = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+            VkSubmitInfo SubmitInfo = {};
+            SubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+            SubmitInfo.waitSemaphoreCount = 1;
+            SubmitInfo.pWaitSemaphores = &ImageAcquiredSemaphore;
+            SubmitInfo.pWaitDstStageMask = &PipelineStageFlags;
+            SubmitInfo.commandBufferCount = 1;
+            SubmitInfo.pCommandBuffers = &VulkanFrame.CommandBuffer;
+            SubmitInfo.signalSemaphoreCount = 1;
+            SubmitInfo.pSignalSemaphores = &RenderCompleteSemaphore;
+
+            if (vkEndCommandBuffer(VulkanFrame.CommandBuffer) == VkResult::VK_SUCCESS)
+            {
+                vkQueueSubmit(m_VkQueue, 1, &SubmitInfo, VulkanFrame.Fence);
+            }
+        }
     }
 }
 
@@ -272,9 +269,9 @@ void IERenderer_Vulkan::GlfwErrorCallbackFunc(int ErrorCode, const char* Descrip
     }
 }
 
-bool IERenderer_Vulkan::InitializeVulkan(const std::vector<const char*>& RequiredInstanceExtensionNames)
+IEResult IERenderer_Vulkan::InitializeVulkan(const std::vector<const char*>& RequiredInstanceExtensionNames)
 {
-    bool bSuccess = false;
+    IEResult Result(IEResult::Type::Fail, "Failed to initialize Vulkan");
 
     uint32_t InstanceExtensionCount = 0;
     vkEnumerateInstanceExtensionProperties(nullptr, &InstanceExtensionCount, nullptr);
@@ -363,80 +360,48 @@ bool IERenderer_Vulkan::InitializeVulkan(const std::vector<const char*>& Require
 
                         DescriptorPoolCreateInfo.pPoolSizes = &DescriptorPoolSize;
 
-                        bSuccess = vkCreateDescriptorPool(m_VkDevice, &DescriptorPoolCreateInfo, m_VkAllocationCallback, &m_VkDescriptorPool) == VkResult::VK_SUCCESS;
+                        if (vkCreateDescriptorPool(m_VkDevice, &DescriptorPoolCreateInfo, m_VkAllocationCallback, &m_VkDescriptorPool) == VkResult::VK_SUCCESS)
+                        {
+                            Result.ResultType = IEResult::Type::Success;
+                            Result.Message = "Successfully initialized Vulkan";
+                        }
                     }
                 }
             }
         }
     }
-    return bSuccess;
+    return Result;
 }
 
-bool IERenderer_Vulkan::InitializeInstancePhysicalDevice()
+IEResult IERenderer_Vulkan::InitializeInstancePhysicalDevice()
 {
+    IEResult Result(IEResult::Type::Fail, "Failed to initialize instance physical device");
+
     uint32_t PhysicalDeviceCount = 0;
     vkEnumeratePhysicalDevices(m_VkInstance, &PhysicalDeviceCount, nullptr);
     std::vector<VkPhysicalDevice> PhysicalDevices(PhysicalDeviceCount);
     if (vkEnumeratePhysicalDevices(m_VkInstance, &PhysicalDeviceCount, PhysicalDevices.data()) == VkResult::VK_SUCCESS)
     {
         m_VkPhysicalDevice = PhysicalDevices[0];
+        Result.ResultType = IEResult::Type::Success;
+        Result.Message = "Using integrated device";
+
         for (VkPhysicalDevice& PhysicalDevice : PhysicalDevices)
         {
             VkPhysicalDeviceProperties PhysicalDeviceProperties;
             vkGetPhysicalDeviceProperties(PhysicalDevice, &PhysicalDeviceProperties);
+            IELOG_INFO("Found %s", PhysicalDeviceProperties.deviceName);
 
             if (PhysicalDeviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
             {
                 m_VkPhysicalDevice = PhysicalDevice;
+                Result.ResultType = IEResult::Type::Success;
+                Result.Message = std::printf("Using physical device %s", PhysicalDeviceProperties.deviceName);
                 break;
             }
         }
     }
-    return m_VkPhysicalDevice != nullptr;
-}
-
-bool IERenderer_Vulkan::InitializeImGuiForVulkan()
-{
-    bool bSuccess = false;
-
-    const uint32_t SurfaceImageFormatCount = 4;
-    const VkFormat RequestSurfaceImageFormats[SurfaceImageFormatCount] = {  VK_FORMAT_B8G8R8A8_UNORM,
-                                                                            VK_FORMAT_R8G8B8A8_UNORM,
-                                                                            VK_FORMAT_B8G8R8_UNORM,
-                                                                            VK_FORMAT_R8G8B8_UNORM };
-    
-    const VkColorSpaceKHR RequestSurfaceColorSpace = VK_COLORSPACE_SRGB_NONLINEAR_KHR;
-    m_AppWindowVulkanData.SurfaceFormat = ImGui_ImplVulkanH_SelectSurfaceFormat(m_VkPhysicalDevice, m_AppWindowVulkanData.Surface,
-        RequestSurfaceImageFormats, SurfaceImageFormatCount, RequestSurfaceColorSpace);
-
-    VkPresentModeKHR PresentModeKHR = VK_PRESENT_MODE_FIFO_KHR;
-    m_AppWindowVulkanData.PresentMode = ImGui_ImplVulkanH_SelectPresentMode(m_VkPhysicalDevice, m_AppWindowVulkanData.Surface, &PresentModeKHR, 1);
-
-    ImGui_ImplVulkanH_CreateOrResizeWindow(m_VkInstance, m_VkPhysicalDevice, m_VkDevice, &m_AppWindowVulkanData, m_QueueFamilyIndex, m_VkAllocationCallback,
-        m_DefaultAppWindowWidth, m_DefaultAppWindowHeight, m_MinImageCount);
-
-    if (ImGui_ImplGlfw_InitForVulkan(m_AppWindow, true))
-    {
-        ImGui_ImplVulkan_InitInfo VulkanInitInfo = {};
-        VulkanInitInfo.Instance = m_VkInstance;
-        VulkanInitInfo.PhysicalDevice = m_VkPhysicalDevice;
-        VulkanInitInfo.Device = m_VkDevice;
-        VulkanInitInfo.QueueFamily = m_QueueFamilyIndex;
-        VulkanInitInfo.Queue = m_VkQueue;
-        VulkanInitInfo.PipelineCache = m_VkPipelineCache;
-        VulkanInitInfo.DescriptorPool = m_VkDescriptorPool;
-        VulkanInitInfo.RenderPass = m_AppWindowVulkanData.RenderPass;
-        VulkanInitInfo.Subpass = 0;
-        VulkanInitInfo.MinImageCount = m_MinImageCount;
-        VulkanInitInfo.ImageCount = m_AppWindowVulkanData.ImageCount;
-        VulkanInitInfo.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
-        VulkanInitInfo.Allocator = m_VkAllocationCallback;
-        VulkanInitInfo.MinAllocationSize = 1024 * 1024;
-        VulkanInitInfo.UseDynamicRendering = false;
-        VulkanInitInfo.CheckVkResultFn = &IERenderer_Vulkan::CheckVkResultFunc;
-        bSuccess = ImGui_ImplVulkan_Init(&VulkanInitInfo);
-    }
-    return bSuccess;
+    return Result;
 }
 
 void IERenderer_Vulkan::DinitializeVulkan()

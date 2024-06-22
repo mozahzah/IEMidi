@@ -2,6 +2,47 @@
 
 #include "IECore.h"
 
+#include <stdio.h>
+#include <stdarg.h>
+
+// Define color codes
+#define COLOR_RESET   "\033[0m"
+#define COLOR_SUCCESS "\033[32m"  // Green
+#define COLOR_WARNING "\033[33m"  // Yellow
+#define COLOR_ERROR   "\033[31m"  // Red
+
+void IELog(int LogLevel, const char* FuncName, const char* Format, ...)
+{
+    const char* ColorCode = nullptr;
+    const char* LevelString = nullptr;
+    switch (LogLevel)
+    {
+    case -1:
+        ColorCode = COLOR_ERROR;
+        LevelString = "Error";
+        break;
+    case 0:
+        ColorCode = COLOR_RESET;
+        LevelString = "Log";
+        break;
+    case 1:
+        ColorCode = COLOR_SUCCESS;
+        LevelString = "Success";
+        break;
+    case 2:
+        ColorCode = COLOR_WARNING;
+        LevelString = "Warning";
+    default:
+        break;
+    };
+    std::printf("%sIELog %s: ", ColorCode, LevelString);
+    va_list Args;
+    va_start(Args, Format);
+    std::vprintf(Format, Args);
+    va_end(Args);
+    std::printf(" [%s]%s\n", FuncName, COLOR_RESET);
+}
+
 IEResult& IEResult::operator=(const IEResult& OtherResult)
 {
     if (this != &OtherResult)
@@ -24,26 +65,25 @@ bool IEResult::operator!=(const IEResult& OtherResult) const
 
 IEResult::operator bool() const
 {
-    if (static_cast<int16_t>(ResultType) < 0)
+    if (static_cast<int16_t>(ResultType) <= 0)
     {
 #if ENABLE_IE_RESULT_LOGGING
-        std::fprintf(stderr, "\033[31mIEError: %s in %s\033[0m\n", Message.data(), FuncName.data());
+        IELOG_ERROR(Message.c_str());
 #endif
-        assert(false);
-        return false;
+        abort();
     }
     else if (static_cast<int16_t>(ResultType) > 1)
     {
 #if ENABLE_IE_RESULT_LOGGING
-        std::printf("\033[33mIEWarning: %s in %s\033[0m\n", Message.data(), FuncName.data());
+        IELOG_WARNING(Message.c_str());
 #endif
         return false;
     }
-    else
+    else // this->Type == IEResul::Type::Success
     {
 #if ENABLE_IE_RESULT_LOGGING
-        std::printf("\033[32mIELog: %s in %s\033[0m\n", Message.data(), FuncName.data());
+        IELOG_SUCCESS(Message.c_str());
 #endif
-        return ResultType == Type::Success;
+        return true;
     }
 }

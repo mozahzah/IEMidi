@@ -6,6 +6,13 @@
 #include <cstdint>
 #include <string>
 
+void IELog(int LogLevel, const char* FuncName, const char* Format, ...);
+#define IELOG_ERROR(Format, ...)   IELog(-1, __func__, Format, ##__VA_ARGS__)
+#define IELOG_INFO(Format, ...)    IELog(0, __func__, Format, ##__VA_ARGS__)
+#define IELOG_SUCCESS(Format, ...) IELog(1, __func__, Format, ##__VA_ARGS__)
+#define IELOG_WARNING(Format, ...) IELog(2, __func__, Format, ##__VA_ARGS__)
+
+#define ENABLE_IE_ASSERT true
 #define ENABLE_IE_RESULT_LOGGING true
 
 struct IEResult
@@ -13,13 +20,13 @@ struct IEResult
 public:  
     enum class Type : int16_t
     {
+        NotSupported = -3,
+        OutOfMemory = -2,
+        Fail = -1,
+        Unknown = 0,
         Success = 1,
-        Fail = 2,
-        InvalidArgument = 3,
-        Unimplemented = 4,
-
-        OutOfMemory = -1,
-        NotSupported = -2,
+        InvalidArgument = 2,
+        Unimplemented = 3,
     };
 
 public:
@@ -28,11 +35,11 @@ public:
     IEResult(IEResult&& other) = default;
 
 #if ENABLE_IE_RESULT_LOGGING
-    explicit IEResult(const IEResult::Type& _ResultType, const char* _Message = "No Message Provided", const char* _FuncName = "Unknown")
-        : ResultType(_ResultType), Message(_Message), FuncName(_FuncName)
+    explicit IEResult(const IEResult::Type& _ResultType = Type::Unknown, const char* _Message = nullptr)
+        : ResultType(_ResultType), Message(_Message)
     {}
 #else
-    explicit IEResult(const IEResult::Type& _ResultType, const char* _Message = nullptr, const char* _FuncName = nullptr)
+    explicit IEResult(const IEResult::Type& _ResultType, const char* _Message = nullptr)
         : ResultType(_ResultType)
     {}
 #endif
@@ -43,15 +50,14 @@ public:
     operator bool() const;
 
 public:
-    Type ResultType = Type::Fail;
-#if ENABLE_IE_RESULT_LOGGING
-    std::string Message = "No Message Provided";
-    const std::string FuncName;
-#endif
+    Type ResultType = Type::Unknown;
+    std::string Message = {};
 };
 
 inline bool IEAssert(bool Expression)
 {
+#if ENABLE_IE_ASSERT
     assert(Expression);
+#endif
     return Expression;
 };
