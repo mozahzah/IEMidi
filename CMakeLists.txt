@@ -13,19 +13,19 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 # Setup compiler
 set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL "")
 begin_section_message("Compiler")
 message("Using Compiler: ${CMAKE_CXX_COMPILER_ID}")
 message("version: ${CMAKE_CXX_COMPILER_VERSION}")
 message("CXX standard: ${CMAKE_CXX_STANDARD}")
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL "")
 
 # Misc conditional setup
 begin_section_message("Working environment")
 if(CMAKE_SYSTEM_NAME MATCHES "Windows")
   include("$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake")
-elseif(CMAKE_SYSTEM_NAME MATCHES "Apple")
-    # Apple requirement
+elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
 endif()
 message("System name: ${CMAKE_SYSTEM_NAME}")
 message("System version: ${CMAKE_SYSTEM_VERSION}")

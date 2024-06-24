@@ -19,7 +19,7 @@ int main()
                 IO.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
                 ImGui::StyleColorsDark();
 
-                const std::filesystem::path AppDirectory = IEUtils::FindFolderPathUpwards(std::filesystem::current_path(), "IE/IEMidiMapper");
+                const std::filesystem::path AppDirectory = IEUtils::FindFolderPathUpwards(std::filesystem::current_path(), "IEMidiMapper");
 
                 const std::filesystem::path ImGuiIniFilePath = AppDirectory / "Settings/IEMidiMapper_ImGui.ini";
                 ImGui::LoadIniSettingsFromDisk(IEUtils::StringCast<char>(ImGuiIniFilePath.c_str()).c_str());
@@ -59,7 +59,7 @@ int main()
                     ImGui::Text("counter = %d", counter);
 
                     ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / IO.Framerate, IO.Framerate);
-                    ImGui::Text("Observed frame time %.2f ms/frame (%.0f FPS)", CapturedDelta * 1000.0f, 1.0f / CapturedDelta.count());
+                    ImGui::Text("Observed frame time %.2f ms/frame (%.0f FPS)", CapturedDelta.count() * 1000.0f, 1.0f / CapturedDelta.count());
                     
                     ImGui::End();
                     

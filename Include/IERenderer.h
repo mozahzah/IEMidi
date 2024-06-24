@@ -2,28 +2,16 @@
 
 #pragma once
 
-#include <filesystem>
-#include <memory>
-#include <stdio.h>
-#include <stdlib.h>
-#include <vector>
-
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_vulkan.h"
-
 #define GLFW_INCLUDE_NONE
 #define GLFW_INCLUDE_VULKAN
-#include "glfw/glfw3.h"
-
+#include "GLFW/glfw3.h"
 #if defined(_MSC_VER) && (_MSC_VER >= 1900) && !defined(IMGUI_DISABLE_WIN32_FUNCTIONS)
 #pragma comment(lib, "legacy_stdio_definitions")
 #endif
-
 //#define APP_USE_UNLIMITED_FRAME_RATE
-#ifdef _DEBUG
-#define APP_USE_VULKAN_DEBUG_REPORT
-#endif
 
 #include "IECore.h"
 
