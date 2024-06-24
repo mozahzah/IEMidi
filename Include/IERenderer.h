@@ -76,7 +76,9 @@ private:
 
 private:
     GLFWwindow* m_AppWindow = nullptr;
-    ImGui_ImplVulkanH_Window m_AppWindowVulkanData;
+    ImGui_ImplVulkanH_Window m_AppWindowVulkanData = {};
+    int32_t m_DefaultAppWindowWidth = 1280;
+    int32_t m_DefaultAppWindowHeight = 720;
 
     VkAllocationCallbacks* m_VkAllocationCallback = nullptr;
     VkInstance m_VkInstance = nullptr;
@@ -90,7 +92,4 @@ private:
     uint32_t m_QueueFamilyIndex = static_cast<uint32_t>(-1);
     int m_MinImageCount = 2;
     bool m_SwapChainRebuild = false;
-
-    int32_t m_DefaultAppWindowWidth = 1280;
-    int32_t m_DefaultAppWindowHeight = 720;
 };

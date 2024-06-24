@@ -3,18 +3,46 @@
 #pragma once
 
 #include <cassert>
+#include <chrono>
 #include <cstdint>
-#include <string>
+#include <cwchar>
+#include <filesystem>
+#include <format>
+#include <locale>
+#include <source_location>
+#include <stack>
+#include <stdarg.h>
+#include <stdio.h>
+#include <string.h>
+#include <vector>
+#include <xutility>
 
-void IELog(int LogLevel, const char* FuncName, const char* Format, ...);
-#define IELOG_ERROR(Format, ...)   IELog(-1, __func__, Format, ##__VA_ARGS__)
-#define IELOG_INFO(Format, ...)    IELog(0, __func__, Format, ##__VA_ARGS__)
-#define IELOG_SUCCESS(Format, ...) IELog(1, __func__, Format, ##__VA_ARGS__)
-#define IELOG_WARNING(Format, ...) IELog(2, __func__, Format, ##__VA_ARGS__)
+/* Time analysers */
+
+using IEClock = std::chrono::high_resolution_clock;
+using IEDuration = std::chrono::duration<double>;
+
+/* Logging and Assertions */
 
 #define ENABLE_IE_ASSERT true
-#define ENABLE_IE_RESULT_LOGGING true
+inline bool IEAssert(bool Expression)
+{
+#if ENABLE_IE_ASSERT
+    assert(Expression);
+#endif
+    return Expression;
+};
 
+namespace Private
+{
+    void IELog(int LogLevel, const char* FuncName, const char* Format, ...);
+}
+#define IELOG_ERROR(Format, ...)   Private::IELog(-1,  std::source_location::current().function_name(), Format, ##__VA_ARGS__)
+#define IELOG_INFO(Format, ...)    Private::IELog( 0,  std::source_location::current().function_name(), Format, ##__VA_ARGS__)
+#define IELOG_SUCCESS(Format, ...) Private::IELog( 1,  std::source_location::current().function_name(), Format, ##__VA_ARGS__)
+#define IELOG_WARNING(Format, ...) Private::IELog( 2,  std::source_location::current().function_name(), Format, ##__VA_ARGS__)
+
+#define ENABLE_IE_RESULT_LOGGING true
 struct IEResult
 {
 public:  
@@ -35,12 +63,12 @@ public:
     IEResult(IEResult&& other) = default;
 
 #if ENABLE_IE_RESULT_LOGGING
-    explicit IEResult(const IEResult::Type& _ResultType = Type::Unknown, const char* _Message = nullptr)
-        : ResultType(_ResultType), Message(_Message)
+    explicit IEResult(const IEResult::Type& _Type = Type::Unknown, const char* _Message = nullptr)
+        : Type(_Type), Message(_Message)
     {}
 #else
-    explicit IEResult(const IEResult::Type& _ResultType, const char* _Message = nullptr)
-        : ResultType(_ResultType)
+    explicit IEResult(const IEResult::Type& _Type, const char* _Message = nullptr)
+        : Type(_Type)
     {}
 #endif
 
@@ -50,14 +78,6 @@ public:
     operator bool() const;
 
 public:
-    Type ResultType = Type::Unknown;
+    Type Type = Type::Unknown;
     std::string Message = {};
-};
-
-inline bool IEAssert(bool Expression)
-{
-#if ENABLE_IE_ASSERT
-    assert(Expression);
-#endif
-    return Expression;
 };

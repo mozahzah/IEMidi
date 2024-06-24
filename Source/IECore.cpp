@@ -2,52 +2,52 @@
 
 #include "IECore.h"
 
-#include <stdio.h>
-#include <stdarg.h>
+/* Logging and Assertions */
 
-// Define color codes
-#define COLOR_RESET   "\033[0m"
-#define COLOR_SUCCESS "\033[32m"  // Green
-#define COLOR_WARNING "\033[33m"  // Yellow
-#define COLOR_ERROR   "\033[31m"  // Red
-
-void IELog(int LogLevel, const char* FuncName, const char* Format, ...)
+namespace Private
 {
-    const char* ColorCode = nullptr;
-    const char* LevelString = nullptr;
-    switch (LogLevel)
+    static constexpr const char* ColorSpecifierReset = "\033[0m";
+    static constexpr const char* ColorSpecifierRed = "\033[31m";
+    static constexpr const char* ColorSpecifierGreen = "\033[32m";
+    static constexpr const char* ColorSpecifierYellow = "\033[33m";
+    void IELog(int LogLevel, const char* FuncName, const char* Format, ...)
     {
-    case -1:
-        ColorCode = COLOR_ERROR;
-        LevelString = "Error";
-        break;
-    case 0:
-        ColorCode = COLOR_RESET;
-        LevelString = "Log";
-        break;
-    case 1:
-        ColorCode = COLOR_SUCCESS;
-        LevelString = "Success";
-        break;
-    case 2:
-        ColorCode = COLOR_WARNING;
-        LevelString = "Warning";
-    default:
-        break;
-    };
-    std::printf("%sIELog %s: ", ColorCode, LevelString);
-    va_list Args;
-    va_start(Args, Format);
-    std::vprintf(Format, Args);
-    va_end(Args);
-    std::printf(" [%s]%s\n", FuncName, COLOR_RESET);
+        const char* ColorCode = nullptr;
+        const char* LevelString = nullptr;
+        switch (LogLevel)
+        {
+        case -1:
+            ColorCode = ColorSpecifierRed;
+            LevelString = "Error";
+            break;
+        case 0:
+            ColorCode = ColorSpecifierReset;
+            LevelString = "Log";
+            break;
+        case 1:
+            ColorCode = ColorSpecifierGreen;
+            LevelString = "Success";
+            break;
+        case 2:
+            ColorCode = ColorSpecifierYellow;
+            LevelString = "Warning";
+        default:
+            break;
+        };
+        std::printf("%sIELog %s: ", ColorCode, LevelString);
+        va_list Args;
+        va_start(Args, Format);
+        std::vprintf(Format, Args);
+        va_end(Args);
+        std::printf(" [%s]%s\n", FuncName, ColorSpecifierReset);
+    }
 }
 
 IEResult& IEResult::operator=(const IEResult& OtherResult)
 {
     if (this != &OtherResult)
     {
-        ResultType = OtherResult.ResultType;
+        Type = OtherResult.Type;
         Message = OtherResult.Message;
     }
     return *this;
@@ -55,7 +55,7 @@ IEResult& IEResult::operator=(const IEResult& OtherResult)
 
 bool IEResult::operator==(const IEResult& OtherResult) const
 {
-    return this->ResultType == OtherResult.ResultType;
+    return this->Type == OtherResult.Type;
 }
 
 bool IEResult::operator!=(const IEResult& OtherResult) const
@@ -65,21 +65,21 @@ bool IEResult::operator!=(const IEResult& OtherResult) const
 
 IEResult::operator bool() const
 {
-    if (static_cast<int16_t>(ResultType) <= 0)
+    if (static_cast<int16_t>(Type) <= 0)
     {
 #if ENABLE_IE_RESULT_LOGGING
         IELOG_ERROR(Message.c_str());
 #endif
         abort();
     }
-    else if (static_cast<int16_t>(ResultType) > 1)
+    else if (static_cast<int16_t>(Type) > 1)
     {
 #if ENABLE_IE_RESULT_LOGGING
         IELOG_WARNING(Message.c_str());
 #endif
         return false;
     }
-    else // this->Type == IEResul::Type::Success
+    else // this->Type == IEResult::Type::Success
     {
 #if ENABLE_IE_RESULT_LOGGING
         IELOG_SUCCESS(Message.c_str());

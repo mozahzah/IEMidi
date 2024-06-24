@@ -16,30 +16,32 @@ IEResult IERenderer_Vulkan::Initialize()
         if (m_AppWindow)
         {
             uint32_t RequiredInstanceExtensionCount = 0;
-            const char** GlfwExtensions = glfwGetRequiredInstanceExtensions(&RequiredInstanceExtensionCount);
-            std::vector<const char*> RequiredInstanceExtensionNames(RequiredInstanceExtensionCount);
-            for (int i =  0; i < RequiredInstanceExtensionCount; i++ )
+            if (const char** GlfwExtensions = glfwGetRequiredInstanceExtensions(&RequiredInstanceExtensionCount))
             {
-                RequiredInstanceExtensionNames[i] = GlfwExtensions[i];
-            }
-
-            if (InitializeVulkan(RequiredInstanceExtensionNames))
-            {
-                if (glfwCreateWindowSurface(m_VkInstance, m_AppWindow, m_VkAllocationCallback, &m_AppWindowVulkanData.Surface) == VkResult::VK_SUCCESS)
+                std::vector<const char*> RequiredInstanceExtensionNames(RequiredInstanceExtensionCount);
+                for (int i = 0; i < RequiredInstanceExtensionCount; i++)
                 {
-                    glfwGetFramebufferSize(m_AppWindow, &m_DefaultAppWindowWidth, &m_DefaultAppWindowHeight);
+                    RequiredInstanceExtensionNames[i] = GlfwExtensions[i];
+                }
 
-                    VkBool32 PhysicalDeviceSurfaceSupport = false;
-                    vkGetPhysicalDeviceSurfaceSupportKHR(m_VkPhysicalDevice, m_QueueFamilyIndex, m_AppWindowVulkanData.Surface, &PhysicalDeviceSurfaceSupport);
-                    if (PhysicalDeviceSurfaceSupport == VK_TRUE)
+                if (InitializeVulkan(RequiredInstanceExtensionNames))
+                {
+                    if (glfwCreateWindowSurface(m_VkInstance, m_AppWindow, m_VkAllocationCallback, &m_AppWindowVulkanData.Surface) == VkResult::VK_SUCCESS)
                     {
-                        Result.ResultType = IEResult::Type::Success;
-                        Result.Message = "Successfully initialized IERenderer";
-                    }
-                    else
-                    {
-                        Result.ResultType = IEResult::Type::NotSupported;
-                        Result.Message = "Physical device is not supported";
+                        glfwGetFramebufferSize(m_AppWindow, &m_DefaultAppWindowWidth, &m_DefaultAppWindowHeight);
+
+                        VkBool32 PhysicalDeviceSurfaceSupport = false;
+                        vkGetPhysicalDeviceSurfaceSupportKHR(m_VkPhysicalDevice, m_QueueFamilyIndex, m_AppWindowVulkanData.Surface, &PhysicalDeviceSurfaceSupport);
+                        if (PhysicalDeviceSurfaceSupport == VK_TRUE)
+                        {
+                            Result.Type = IEResult::Type::Success;
+                            Result.Message = "Successfully initialized IERenderer";
+                        }
+                        else
+                        {
+                            Result.Type = IEResult::Type::NotSupported;
+                            Result.Message = "Physical device is not supported";
+                        }
                     }
                 }
             }
@@ -52,18 +54,17 @@ IEResult IERenderer_Vulkan::PostImGuiContextCreated()
 {
     IEResult Result(IEResult::Type::Fail, "Failed to initialize ImGuiContext with Vulkan");
 
-    const uint32_t SurfaceImageFormatCount = 4;
-    const VkFormat RequestSurfaceImageFormats[SurfaceImageFormatCount] = {  VK_FORMAT_B8G8R8A8_UNORM,
-                                                                            VK_FORMAT_R8G8B8A8_UNORM,
-                                                                            VK_FORMAT_B8G8R8_UNORM,
-                                                                            VK_FORMAT_R8G8B8_UNORM };
+    const VkFormat RequestSurfaceImageFormats[4] = {  VK_FORMAT_B8G8R8A8_UNORM,
+                                                      VK_FORMAT_R8G8B8A8_UNORM,
+                                                      VK_FORMAT_B8G8R8_UNORM,
+                                                      VK_FORMAT_R8G8B8_UNORM };
     
     const VkColorSpaceKHR RequestSurfaceColorSpace = VK_COLORSPACE_SRGB_NONLINEAR_KHR;
     m_AppWindowVulkanData.SurfaceFormat = ImGui_ImplVulkanH_SelectSurfaceFormat(m_VkPhysicalDevice, m_AppWindowVulkanData.Surface,
-        RequestSurfaceImageFormats, SurfaceImageFormatCount, RequestSurfaceColorSpace);
+        RequestSurfaceImageFormats, std::size(RequestSurfaceImageFormats), RequestSurfaceColorSpace);
 
-    VkPresentModeKHR PresentModeKHR = VK_PRESENT_MODE_FIFO_KHR;
-    m_AppWindowVulkanData.PresentMode = ImGui_ImplVulkanH_SelectPresentMode(m_VkPhysicalDevice, m_AppWindowVulkanData.Surface, &PresentModeKHR, 1);
+    VkPresentModeKHR PresentModeKHR[1] = { VK_PRESENT_MODE_FIFO_KHR };
+    m_AppWindowVulkanData.PresentMode = ImGui_ImplVulkanH_SelectPresentMode(m_VkPhysicalDevice, m_AppWindowVulkanData.Surface, PresentModeKHR, std::size(PresentModeKHR));
 
     ImGui_ImplVulkanH_CreateOrResizeWindow(m_VkInstance, m_VkPhysicalDevice, m_VkDevice, &m_AppWindowVulkanData, m_QueueFamilyIndex, m_VkAllocationCallback,
         m_DefaultAppWindowWidth, m_DefaultAppWindowHeight, m_MinImageCount);
@@ -84,12 +85,12 @@ IEResult IERenderer_Vulkan::PostImGuiContextCreated()
         VulkanInitInfo.ImageCount = m_AppWindowVulkanData.ImageCount;
         VulkanInitInfo.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
         VulkanInitInfo.Allocator = m_VkAllocationCallback;
-        VulkanInitInfo.MinAllocationSize = 1024 * 1024;
+        VulkanInitInfo.MinAllocationSize = 1024 * 1024; // TODO Magic Number
         VulkanInitInfo.UseDynamicRendering = false;
         VulkanInitInfo.CheckVkResultFn = &IERenderer_Vulkan::CheckVkResultFunc;
         if (ImGui_ImplVulkan_Init(&VulkanInitInfo)) 
         {
-            Result.ResultType = IEResult::Type::Success;
+            Result.Type = IEResult::Type::Success;
             Result.Message = "Successfully initialized ImGuiContext with Vulkan";
         }     
     }
@@ -166,7 +167,7 @@ void IERenderer_Vulkan::RenderFrame(ImDrawData& DrawData)
         m_AppWindowVulkanData.ClearValue.color.float32[2] = 0;
         m_AppWindowVulkanData.ClearValue.color.float32[3] = 0;
 
-        VkSemaphore ImageAcquiredSemaphore  = m_AppWindowVulkanData.FrameSemaphores[m_AppWindowVulkanData.SemaphoreIndex].ImageAcquiredSemaphore;
+        VkSemaphore ImageAcquiredSemaphore = m_AppWindowVulkanData.FrameSemaphores[m_AppWindowVulkanData.SemaphoreIndex].ImageAcquiredSemaphore;
         VkSemaphore RenderCompleteSemaphore = m_AppWindowVulkanData.FrameSemaphores[m_AppWindowVulkanData.SemaphoreIndex].RenderCompleteSemaphore;
     
         const VkResult Result = vkAcquireNextImageKHR(m_VkDevice, m_AppWindowVulkanData.Swapchain, UINT64_MAX, ImageAcquiredSemaphore, VK_NULL_HANDLE, &m_AppWindowVulkanData.FrameIndex);
@@ -177,12 +178,12 @@ void IERenderer_Vulkan::RenderFrame(ImDrawData& DrawData)
         }
 
         ImGui_ImplVulkanH_Frame& VulkanFrame = m_AppWindowVulkanData.Frames[m_AppWindowVulkanData.FrameIndex];
-        if (vkWaitForFences(m_VkDevice, 1, &VulkanFrame.Fence, VK_TRUE, UINT64_MAX) == VkResult::VK_SUCCESS)
+        if (vkWaitForFences(m_VkDevice, 1, &VulkanFrame.Fence, VK_TRUE, UINT64_MAX) == VkResult::VK_SUCCESS) // TODO Magic Number
         {
             CheckVkResultFunc(Result);
             if (vkResetFences(m_VkDevice, 1, &VulkanFrame.Fence) == VkResult::VK_SUCCESS)
             {
-                vkResetCommandPool(m_VkDevice, VulkanFrame.CommandPool, 0);   
+                vkResetCommandPool(m_VkDevice, VulkanFrame.CommandPool, 0); // TODO Magic Number
             }
         }
         
@@ -197,8 +198,8 @@ void IERenderer_Vulkan::RenderFrame(ImDrawData& DrawData)
             RenderPassBeginInfo.framebuffer = VulkanFrame.Framebuffer;
             RenderPassBeginInfo.renderArea.extent.width = m_AppWindowVulkanData.Width;
             RenderPassBeginInfo.renderArea.extent.height = m_AppWindowVulkanData.Height;
-            RenderPassBeginInfo.clearValueCount = 1;
             RenderPassBeginInfo.pClearValues = &m_AppWindowVulkanData.ClearValue;
+            RenderPassBeginInfo.clearValueCount = 1; // TODO Magic Number
 
             vkCmdBeginRenderPass(VulkanFrame.CommandBuffer, &RenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
             ImGui_ImplVulkan_RenderDrawData(&DrawData, VulkanFrame.CommandBuffer);
@@ -210,9 +211,9 @@ void IERenderer_Vulkan::RenderFrame(ImDrawData& DrawData)
             SubmitInfo.waitSemaphoreCount = 1;
             SubmitInfo.pWaitSemaphores = &ImageAcquiredSemaphore;
             SubmitInfo.pWaitDstStageMask = &PipelineStageFlags;
-            SubmitInfo.commandBufferCount = 1;
+            SubmitInfo.commandBufferCount = 1; // TODO Magic Number
             SubmitInfo.pCommandBuffers = &VulkanFrame.CommandBuffer;
-            SubmitInfo.signalSemaphoreCount = 1;
+            SubmitInfo.signalSemaphoreCount = 1; // TODO Magic Number
             SubmitInfo.pSignalSemaphores = &RenderCompleteSemaphore;
 
             if (vkEndCommandBuffer(VulkanFrame.CommandBuffer) == VkResult::VK_SUCCESS)
@@ -231,9 +232,9 @@ void IERenderer_Vulkan::PresentFrame()
 
         VkPresentInfoKHR PresentInfoKHR = {};
         PresentInfoKHR.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-        PresentInfoKHR.waitSemaphoreCount = 1;
+        PresentInfoKHR.waitSemaphoreCount = 1; // TODO Magic Number
         PresentInfoKHR.pWaitSemaphores = &RenderCompleteSemaphore;
-        PresentInfoKHR.swapchainCount = 1;
+        PresentInfoKHR.swapchainCount = 1; // TODO Magic Number
         PresentInfoKHR.pSwapchains = &m_AppWindowVulkanData.Swapchain;
         PresentInfoKHR.pImageIndices = &m_AppWindowVulkanData.FrameIndex;
 
@@ -333,13 +334,13 @@ IEResult IERenderer_Vulkan::InitializeVulkan(const std::vector<const char*>& Req
                     VkDeviceQueueCreateInfo DeviceQueueCreateInfo = {};
                     DeviceQueueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
                     DeviceQueueCreateInfo.queueFamilyIndex = m_QueueFamilyIndex;
-                    DeviceQueueCreateInfo.queueCount = 1;
-                    float QueuePriority = 1.0f;
+                    DeviceQueueCreateInfo.queueCount = 1; // TODO Magic Number
+                    float QueuePriority = 1.0f; // TODO Magic Number
                     DeviceQueueCreateInfo.pQueuePriorities = &QueuePriority;
 
                     VkDeviceCreateInfo DeviceCreateInfo = {};
                     DeviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-                    DeviceCreateInfo.queueCreateInfoCount = 1;
+                    DeviceCreateInfo.queueCreateInfoCount = 1; // TODO Magic Number
                     DeviceCreateInfo.pQueueCreateInfos = &DeviceQueueCreateInfo;
                     DeviceCreateInfo.enabledExtensionCount = (uint32_t)DeviceExtensionCount;
                     DeviceCreateInfo.ppEnabledExtensionNames = DeviceExtensionNames.data();
@@ -351,18 +352,18 @@ IEResult IERenderer_Vulkan::InitializeVulkan(const std::vector<const char*>& Req
                         VkDescriptorPoolCreateInfo DescriptorPoolCreateInfo = {};
                         DescriptorPoolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
                         DescriptorPoolCreateInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
-                        DescriptorPoolCreateInfo.maxSets = 1;
-                        DescriptorPoolCreateInfo.poolSizeCount = 1;
+                        DescriptorPoolCreateInfo.maxSets = 1; // TODO Magic Number
+                        DescriptorPoolCreateInfo.poolSizeCount = 1; // TODO Magic Number
 
                         VkDescriptorPoolSize DescriptorPoolSize = {};
                         DescriptorPoolSize.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-                        DescriptorPoolSize.descriptorCount = 1;
+                        DescriptorPoolSize.descriptorCount = 1; // TODO Magic Number
 
                         DescriptorPoolCreateInfo.pPoolSizes = &DescriptorPoolSize;
 
                         if (vkCreateDescriptorPool(m_VkDevice, &DescriptorPoolCreateInfo, m_VkAllocationCallback, &m_VkDescriptorPool) == VkResult::VK_SUCCESS)
                         {
-                            Result.ResultType = IEResult::Type::Success;
+                            Result.Type = IEResult::Type::Success;
                             Result.Message = "Successfully initialized Vulkan";
                         }
                     }
@@ -383,7 +384,7 @@ IEResult IERenderer_Vulkan::InitializeInstancePhysicalDevice()
     if (vkEnumeratePhysicalDevices(m_VkInstance, &PhysicalDeviceCount, PhysicalDevices.data()) == VkResult::VK_SUCCESS)
     {
         m_VkPhysicalDevice = PhysicalDevices[0];
-        Result.ResultType = IEResult::Type::Success;
+        Result.Type = IEResult::Type::Success;
         Result.Message = "Using integrated device";
 
         for (VkPhysicalDevice& PhysicalDevice : PhysicalDevices)
@@ -395,8 +396,8 @@ IEResult IERenderer_Vulkan::InitializeInstancePhysicalDevice()
             if (PhysicalDeviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
             {
                 m_VkPhysicalDevice = PhysicalDevice;
-                Result.ResultType = IEResult::Type::Success;
-                Result.Message = std::printf("Using physical device %s", PhysicalDeviceProperties.deviceName);
+                Result.Type = IEResult::Type::Success;
+                Result.Message = std::format("Using physical device {}", PhysicalDeviceProperties.deviceName);
                 break;
             }
         }
