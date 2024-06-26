@@ -68,21 +68,21 @@ IEResult::operator bool() const
     if (static_cast<int16_t>(Type) <= 0)
     {
 #if ENABLE_IE_RESULT_LOGGING
-        IELOG_ERROR(Message.c_str());
+        Private::IELog(-1, CallerContextFuncName, Message.c_str());
 #endif
         abort();
     }
     else if (static_cast<int16_t>(Type) > 1)
     {
 #if ENABLE_IE_RESULT_LOGGING
-        IELOG_WARNING(Message.c_str());
+        Private::IELog(2, CallerContextFuncName, Message.c_str());
 #endif
         return false;
     }
     else // this->Type == IEResult::Type::Success
     {
 #if ENABLE_IE_RESULT_LOGGING
-        IELOG_SUCCESS(Message.c_str());
+        Private::IELog(1, CallerContextFuncName, Message.c_str());
 #endif
         return true;
     }

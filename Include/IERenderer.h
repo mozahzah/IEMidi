@@ -2,16 +2,16 @@
 
 #pragma once
 
-#include "imgui.h"
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_vulkan.h"
-#define GLFW_INCLUDE_NONE
+//#define APP_USE_UNLIMITED_FRAME_RATE
 #define GLFW_INCLUDE_VULKAN
-#include "GLFW/glfw3.h"
 #if defined(_MSC_VER) && (_MSC_VER >= 1900) && !defined(IMGUI_DISABLE_WIN32_FUNCTIONS)
 #pragma comment(lib, "legacy_stdio_definitions")
 #endif
-//#define APP_USE_UNLIMITED_FRAME_RATE
+
+#include "GLFW/glfw3.h"
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_vulkan.h"
 
 #include "IECore.h"
 
@@ -21,18 +21,19 @@ public:
     virtual ~IERenderer() = default;
 
 public:
-    virtual IEResult Initialize() { return IEResult(IEResult::Type::Unimplemented, "Unimplemented."); };
-    virtual IEResult PostImGuiContextCreated() { return IEResult(IEResult::Type::Unimplemented, "Unimplemented."); };
-    virtual void Deinitialize() {};
-    virtual int32_t FlushGPUCommandsAndWait() { return -1; };
+    virtual IEResult Initialize() { return IEResult(IEResult::Type::Unimplemented, "Unimplemented."); }
+    virtual IEResult PostImGuiContextCreated() { return IEResult(IEResult::Type::Unimplemented, "Unimplemented."); }
+    virtual void Deinitialize() {}
+    virtual int32_t FlushGPUCommandsAndWait() { return -1; }
+    
+    virtual bool IsAppWindowOpen() const { return false; }
+    virtual bool IsAppWindowMinimized() const { return true; }
+    virtual void PollEvents() const {}
+    virtual void CheckAndResizeSwapChain() {}
 
-    virtual bool IsAppWindowOpen() {return false;};
-    virtual void PollEvents() {};
-    virtual void CheckAndResizeSwapChain() {};
-
-    virtual void NewFrame() {};
-    virtual void RenderFrame(ImDrawData& DrawData) {};
-    virtual void PresentFrame() {};
+    virtual void NewFrame() {}
+    virtual void RenderFrame(ImDrawData& DrawData) {}
+    virtual void PresentFrame() {}
 };
 
 class IERenderer_Vulkan : public IERenderer
@@ -43,9 +44,10 @@ public:
     IEResult PostImGuiContextCreated() override;
     void Deinitialize() override;
     int32_t FlushGPUCommandsAndWait() override;
-
-    bool IsAppWindowOpen() override;
-    void PollEvents() override;
+    
+    bool IsAppWindowOpen() const override;
+    bool IsAppWindowMinimized() const override;
+    void PollEvents() const override;
     void CheckAndResizeSwapChain() override;
 
     void NewFrame() override;

@@ -116,7 +116,7 @@ int32_t IERenderer_Vulkan::FlushGPUCommandsAndWait()
     return vkDeviceWaitIdle(m_VkDevice);
 }
 
-bool IERenderer_Vulkan::IsAppWindowOpen()
+bool IERenderer_Vulkan::IsAppWindowOpen() const
 {
     bool bIsAppWindowOpen = false;
     if (m_AppWindow)
@@ -126,7 +126,20 @@ bool IERenderer_Vulkan::IsAppWindowOpen()
     return bIsAppWindowOpen;
 }
 
-void IERenderer_Vulkan::PollEvents()
+bool IERenderer_Vulkan::IsAppWindowMinimized() const
+{
+    bool bIsAppWindowMinimized = false;
+    if (m_AppWindow)
+    {
+        if (glfwGetWindowAttrib(m_AppWindow, GLFW_ICONIFIED))
+        {
+            bIsAppWindowMinimized = true;
+        }
+    }
+    return bIsAppWindowMinimized;
+}
+
+void IERenderer_Vulkan::PollEvents() const
 {
     glfwPollEvents();
 }

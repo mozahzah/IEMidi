@@ -51,7 +51,7 @@ add_subdirectory(ThirdParty/imgui)
 
 # Add executable and link libraries
 begin_section_message("Adding executable and finalizing library linking")
-file(GLOB SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/Source/*.cpp")
+file(GLOB_RECURSE SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/Source/*.cpp")
 add_library(LIEMidiMapper STATIC ${SOURCE_FILES})
 target_include_directories(LIEMidiMapper PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/Include)
 target_link_libraries(LIEMidiMapper PUBLIC rtmidi)

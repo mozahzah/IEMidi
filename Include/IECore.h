@@ -11,11 +11,13 @@
 #include <filesystem>
 #include <format>
 #include <locale>
+#include <memory>
 #include <source_location>
 #include <stack>
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
+#include <thread>
 #include <vector>
 
 /* Time analysers */
@@ -64,8 +66,8 @@ public:
     IEResult(IEResult&& other) = default;
 
 #if ENABLE_IE_RESULT_LOGGING
-    explicit IEResult(const IEResult::Type& _Type = Type::Unknown, const char* _Message = nullptr)
-        : Type(_Type), Message(_Message)
+    explicit IEResult(const IEResult::Type& _Type = Type::Unknown, const char* _Message = nullptr, const std::source_location& CallerContext = std::source_location::current())
+        : Type(_Type), Message(_Message), CallerContextFuncName(CallerContext.function_name())
     {}
 #else
     explicit IEResult(const IEResult::Type& _Type, const char* _Message = nullptr)
@@ -81,4 +83,7 @@ public:
 public:
     Type Type = Type::Unknown;
     std::string Message = {};
+
+private:
+    const char* CallerContextFuncName = nullptr;
 };

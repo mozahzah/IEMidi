@@ -1,9 +1,9 @@
 // Copyright © 2024 mozahzah (Incus Entertainment). All rights reserved.
 
-#include "imgui.h"
-
 #include "IEMidiMapper.h"
 #include "IEUtils.h"
+
+#include "IEExtensions/imgui_IE.h"
 
 int main()
 {
@@ -16,8 +16,8 @@ int main()
             if (Renderer.PostImGuiContextCreated())
             {
                 ImGuiIO& IO = ImGui::GetIO();
-                IO.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-                ImGui::StyleColorsDark();
+                IO.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_IsSRGB;
+                ImGui::StyleColorsIE();
 
                 const std::filesystem::path AppDirectory = IEUtils::FindFolderPathUpwards(std::filesystem::current_path(), "IEMidiMapper");
 
@@ -42,25 +42,16 @@ int main()
                     Renderer.NewFrame();
                     ImGui::NewFrame();
 
-                    static float f = 0.0f;
-                    static int counter = 0;
-                    bool show_demo_window;
-
-                    ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
-
-                    ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
-                    ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
-
-                    ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-
-                    if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
-                        counter++;
-                    ImGui::SameLine();
-                    ImGui::Text("counter = %d", counter);
+                    
+                    ImGui::ShowDemoWindow();
+                    ImGui::Begin("Window!");
 
                     ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / IO.Framerate, IO.Framerate);
-                    ImGui::Text("Observed frame time %.2f ms/frame (%.0f FPS)", CapturedDelta.count() * 1000.0f, 1.0f / CapturedDelta.count());
-                    
+
+                    const uint32_t ObservedFrameTimeMs = CapturedDelta.count() * 1000.0f;
+                    const double ObservedFrameRate = 1.0f / CapturedDelta.count();
+                    ImGui::Text("Observed frame time %.2f ms/frame (%.0f FPS)", ObservedFrameTimeMs, ObservedFrameRate);
+
                     ImGui::End();
                     
                     // Rendering
@@ -75,6 +66,7 @@ int main()
                 }
             }
         }
+
         Renderer.Deinitialize();
     }
 
