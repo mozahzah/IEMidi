@@ -31,38 +31,36 @@ int main()
                     IELOG_SUCCESS("Successfully loaded font (%s)", RobotoMonoFont->GetDebugName());
                 }
 
-                IEDuration CapturedDelta;
-                IEClock::time_point Timer = IEClock::now();
+                IEClock::time_point StartFrameTime = IEClock::now();
+                IEDurationMs CapturedDeltaTime = IEDurationMs::zero();
+                
                 while (Renderer.IsAppWindowOpen())
                 {
+                    StartFrameTime = IEClock::now();
+
                     Renderer.PollEvents();
-
                     Renderer.CheckAndResizeSwapChain();
-
                     Renderer.NewFrame();
                     ImGui::NewFrame();
 
-                    
                     ImGui::ShowDemoWindow();
                     ImGui::Begin("Window!");
-
                     ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / IO.Framerate, IO.Framerate);
-
-                    const uint32_t ObservedFrameTimeMs = CapturedDelta.count() * 1000.0f;
-                    const double ObservedFrameRate = 1.0f / CapturedDelta.count();
-                    ImGui::Text("Observed frame time %.2f ms/frame (%.0f FPS)", ObservedFrameTimeMs, ObservedFrameRate);
-
                     ImGui::End();
-                    
+
                     // Rendering
                     ImGui::Render();
                     Renderer.RenderFrame(*ImGui::GetDrawData());
                     Renderer.PresentFrame();
 
                     // Measure time at the end of the frame
-                    IEClock::time_point Now = IEClock::now();
-                    CapturedDelta = std::chrono::duration_cast<IEDuration>(Now - Timer);
-                    Timer = Now;
+                    CapturedDeltaTime = std::chrono::duration_cast<IEDurationMs>(IEClock::now() - StartFrameTime);
+                    
+                    const int32_t SleepDurationMs = TARGET_FRAME_DURATION - CapturedDeltaTime.count();
+                    if (SleepDurationMs > 1)
+                    {
+                        std::this_thread::sleep_for(std::chrono::milliseconds(SleepDurationMs));
+                    }
                 }
             }
         }

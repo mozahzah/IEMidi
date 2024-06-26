@@ -23,7 +23,8 @@
 /* Time analysers */
 
 using IEClock = std::chrono::high_resolution_clock;
-using IEDuration = std::chrono::duration<double>;
+using IEDurationMs = std::chrono::milliseconds;
+static constexpr uint32_t TARGET_FRAME_DURATION = 1000 / 60; // 50ms
 
 /* Logging and Assertions */
 

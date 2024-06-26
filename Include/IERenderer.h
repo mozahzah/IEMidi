@@ -2,7 +2,6 @@
 
 #pragma once
 
-//#define APP_USE_UNLIMITED_FRAME_RATE
 #define GLFW_INCLUDE_VULKAN
 #if defined(_MSC_VER) && (_MSC_VER >= 1900) && !defined(IMGUI_DISABLE_WIN32_FUNCTIONS)
 #pragma comment(lib, "legacy_stdio_definitions")

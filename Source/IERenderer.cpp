@@ -58,7 +58,7 @@ IEResult IERenderer_Vulkan::PostImGuiContextCreated()
                                                       VK_FORMAT_R8G8B8A8_UNORM,
                                                       VK_FORMAT_B8G8R8_UNORM,
                                                       VK_FORMAT_R8G8B8_UNORM };
-    
+
     const VkColorSpaceKHR RequestSurfaceColorSpace = VK_COLORSPACE_SRGB_NONLINEAR_KHR;
     m_AppWindowVulkanData.SurfaceFormat = ImGui_ImplVulkanH_SelectSurfaceFormat(m_VkPhysicalDevice, m_AppWindowVulkanData.Surface,
         RequestSurfaceImageFormats, std::size(RequestSurfaceImageFormats), RequestSurfaceColorSpace);
@@ -88,11 +88,11 @@ IEResult IERenderer_Vulkan::PostImGuiContextCreated()
         VulkanInitInfo.MinAllocationSize = 1024 * 1024; // TODO Magic Number
         VulkanInitInfo.UseDynamicRendering = false;
         VulkanInitInfo.CheckVkResultFn = &IERenderer_Vulkan::CheckVkResultFunc;
-        if (ImGui_ImplVulkan_Init(&VulkanInitInfo)) 
+        if (ImGui_ImplVulkan_Init(&VulkanInitInfo))
         {
             Result.Type = IEResult::Type::Success;
             Result.Message = "Successfully initialized ImGuiContext with Vulkan";
-        }     
+        }
     }
     return Result;
 }
@@ -106,7 +106,7 @@ void IERenderer_Vulkan::Deinitialize()
     ImGui_ImplVulkanH_DestroyWindow(m_VkInstance, m_VkDevice, &m_AppWindowVulkanData, m_VkAllocationCallback);
 
     DinitializeVulkan();
-    
+
     glfwDestroyWindow(m_AppWindow);
     glfwTerminate();
 }
@@ -151,14 +151,14 @@ void IERenderer_Vulkan::CheckAndResizeSwapChain()
 
     if (FrameBufferWidth > 0 && FrameBufferHeight > 0 &&
         (m_SwapChainRebuild ||
-        m_AppWindowVulkanData.Width != FrameBufferWidth ||
-        m_AppWindowVulkanData.Height != FrameBufferHeight))
+            m_AppWindowVulkanData.Width != FrameBufferWidth ||
+            m_AppWindowVulkanData.Height != FrameBufferHeight))
     {
         ImGui_ImplVulkan_SetMinImageCount(m_MinImageCount);
         ImGui_ImplVulkanH_CreateOrResizeWindow(m_VkInstance, m_VkPhysicalDevice,
             m_VkDevice, &m_AppWindowVulkanData, m_QueueFamilyIndex, m_VkAllocationCallback,
             FrameBufferWidth, FrameBufferHeight, m_MinImageCount);
-        
+
         m_AppWindowVulkanData.FrameIndex = 0;
         m_SwapChainRebuild = false;
     }
@@ -182,7 +182,7 @@ void IERenderer_Vulkan::RenderFrame(ImDrawData& DrawData)
 
         VkSemaphore ImageAcquiredSemaphore = m_AppWindowVulkanData.FrameSemaphores[m_AppWindowVulkanData.SemaphoreIndex].ImageAcquiredSemaphore;
         VkSemaphore RenderCompleteSemaphore = m_AppWindowVulkanData.FrameSemaphores[m_AppWindowVulkanData.SemaphoreIndex].RenderCompleteSemaphore;
-    
+
         const VkResult Result = vkAcquireNextImageKHR(m_VkDevice, m_AppWindowVulkanData.Swapchain, UINT64_MAX, ImageAcquiredSemaphore, VK_NULL_HANDLE, &m_AppWindowVulkanData.FrameIndex);
         if (Result == VK_ERROR_OUT_OF_DATE_KHR || Result == VK_SUBOPTIMAL_KHR)
         {
@@ -193,45 +193,45 @@ void IERenderer_Vulkan::RenderFrame(ImDrawData& DrawData)
         ImGui_ImplVulkanH_Frame& VulkanFrame = m_AppWindowVulkanData.Frames[m_AppWindowVulkanData.FrameIndex];
         if (vkWaitForFences(m_VkDevice, 1, &VulkanFrame.Fence, VK_TRUE, UINT64_MAX) == VkResult::VK_SUCCESS) // TODO Magic Number
         {
-            CheckVkResultFunc(Result);
             if (vkResetFences(m_VkDevice, 1, &VulkanFrame.Fence) == VkResult::VK_SUCCESS)
             {
-                vkResetCommandPool(m_VkDevice, VulkanFrame.CommandPool, 0); // TODO Magic Number
-            }
-        }
-        
-        VkCommandBufferBeginInfo CommandBufferBeginInfo = {};
-        CommandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-        CommandBufferBeginInfo.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-        if (vkBeginCommandBuffer(VulkanFrame.CommandBuffer, &CommandBufferBeginInfo) == VkResult::VK_SUCCESS)
-        {
-            VkRenderPassBeginInfo RenderPassBeginInfo = {};
-            RenderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-            RenderPassBeginInfo.renderPass = m_AppWindowVulkanData.RenderPass;
-            RenderPassBeginInfo.framebuffer = VulkanFrame.Framebuffer;
-            RenderPassBeginInfo.renderArea.extent.width = m_AppWindowVulkanData.Width;
-            RenderPassBeginInfo.renderArea.extent.height = m_AppWindowVulkanData.Height;
-            RenderPassBeginInfo.pClearValues = &m_AppWindowVulkanData.ClearValue;
-            RenderPassBeginInfo.clearValueCount = 1; // TODO Magic Number
+                if (vkResetCommandPool(m_VkDevice, VulkanFrame.CommandPool, 0) == VkResult::VK_SUCCESS) // TODO Magic Number
+                {
+                    VkCommandBufferBeginInfo CommandBufferBeginInfo = {};
+                    CommandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+                    CommandBufferBeginInfo.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+                    if (vkBeginCommandBuffer(VulkanFrame.CommandBuffer, &CommandBufferBeginInfo) == VkResult::VK_SUCCESS)
+                    {
+                        VkRenderPassBeginInfo RenderPassBeginInfo = {};
+                        RenderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+                        RenderPassBeginInfo.renderPass = m_AppWindowVulkanData.RenderPass;
+                        RenderPassBeginInfo.framebuffer = VulkanFrame.Framebuffer;
+                        RenderPassBeginInfo.renderArea.extent.width = m_AppWindowVulkanData.Width;
+                        RenderPassBeginInfo.renderArea.extent.height = m_AppWindowVulkanData.Height;
+                        RenderPassBeginInfo.pClearValues = &m_AppWindowVulkanData.ClearValue;
+                        RenderPassBeginInfo.clearValueCount = 1; // TODO Magic Number
 
-            vkCmdBeginRenderPass(VulkanFrame.CommandBuffer, &RenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-            ImGui_ImplVulkan_RenderDrawData(&DrawData, VulkanFrame.CommandBuffer);
-            vkCmdEndRenderPass(VulkanFrame.CommandBuffer);
+                        vkCmdBeginRenderPass(VulkanFrame.CommandBuffer, &RenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+                        ImGui_ImplVulkan_RenderDrawData(&DrawData, VulkanFrame.CommandBuffer);
+                        vkCmdEndRenderPass(VulkanFrame.CommandBuffer);
 
-            VkPipelineStageFlags PipelineStageFlags = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-            VkSubmitInfo SubmitInfo = {};
-            SubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-            SubmitInfo.waitSemaphoreCount = 1;
-            SubmitInfo.pWaitSemaphores = &ImageAcquiredSemaphore;
-            SubmitInfo.pWaitDstStageMask = &PipelineStageFlags;
-            SubmitInfo.commandBufferCount = 1; // TODO Magic Number
-            SubmitInfo.pCommandBuffers = &VulkanFrame.CommandBuffer;
-            SubmitInfo.signalSemaphoreCount = 1; // TODO Magic Number
-            SubmitInfo.pSignalSemaphores = &RenderCompleteSemaphore;
+                        VkPipelineStageFlags PipelineStageFlags = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+                        VkSubmitInfo SubmitInfo = {};
+                        SubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+                        SubmitInfo.waitSemaphoreCount = 1;
+                        SubmitInfo.pWaitSemaphores = &ImageAcquiredSemaphore;
+                        SubmitInfo.pWaitDstStageMask = &PipelineStageFlags;
+                        SubmitInfo.commandBufferCount = 1; // TODO Magic Number
+                        SubmitInfo.pCommandBuffers = &VulkanFrame.CommandBuffer;
+                        SubmitInfo.signalSemaphoreCount = 1; // TODO Magic Number
+                        SubmitInfo.pSignalSemaphores = &RenderCompleteSemaphore;
 
-            if (vkEndCommandBuffer(VulkanFrame.CommandBuffer) == VkResult::VK_SUCCESS)
-            {
-                vkQueueSubmit(m_VkQueue, 1, &SubmitInfo, VulkanFrame.Fence);
+                        if (vkEndCommandBuffer(VulkanFrame.CommandBuffer) == VkResult::VK_SUCCESS)
+                        {
+                            vkQueueSubmit(m_VkQueue, 1, &SubmitInfo, VulkanFrame.Fence);
+                        }
+                    }
+                }
             }
         }
     }
@@ -293,7 +293,7 @@ IEResult IERenderer_Vulkan::InitializeVulkan(const std::vector<const char*>& Req
     if (vkEnumerateInstanceExtensionProperties(nullptr, &InstanceExtensionCount, InstanceExtensionProperties.data()) == VkResult::VK_SUCCESS)
     {
         std::vector<const char*> InstanceExtensionNames(InstanceExtensionCount);
-        for (int i =  0; i < InstanceExtensionCount; i++ )
+        for (int i = 0; i < InstanceExtensionCount; i++)
         {
             InstanceExtensionNames[i] = InstanceExtensionProperties[i].extensionName;
         }
@@ -339,7 +339,7 @@ IEResult IERenderer_Vulkan::InitializeVulkan(const std::vector<const char*>& Req
                     vkEnumerateDeviceExtensionProperties(m_VkPhysicalDevice, nullptr, &DeviceExtensionCount, DeviceExtensionProperties.data());
 
                     std::vector<const char*> DeviceExtensionNames(DeviceExtensionCount);
-                    for (int i =  0; i < DeviceExtensionCount; i++ )
+                    for (int i = 0; i < DeviceExtensionCount; i++)
                     {
                         DeviceExtensionNames[i] = DeviceExtensionProperties[i].extensionName;
                     }
@@ -361,7 +361,7 @@ IEResult IERenderer_Vulkan::InitializeVulkan(const std::vector<const char*>& Req
                     if (vkCreateDevice(m_VkPhysicalDevice, &DeviceCreateInfo, m_VkAllocationCallback, &m_VkDevice) == VkResult::VK_SUCCESS)
                     {
                         vkGetDeviceQueue(m_VkDevice, m_QueueFamilyIndex, 0, &m_VkQueue);
-                
+
                         VkDescriptorPoolCreateInfo DescriptorPoolCreateInfo = {};
                         DescriptorPoolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
                         DescriptorPoolCreateInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
