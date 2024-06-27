@@ -3,6 +3,8 @@
 #include "IEMidi.h"
 #include "IEUtils.h"
 
+#include "ryml.hpp"
+
 #include "IEExtensions/imgui_IE.h"
 
 int main()
