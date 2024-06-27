@@ -6,5 +6,5 @@
 
 namespace ImGui
 {
-    void StyleColorsIE(ImGuiStyle* StyleDestination = nullptr);
+    void StyleIE(ImGuiStyle* StyleDestination = nullptr);
 }

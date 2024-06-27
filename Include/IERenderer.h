@@ -33,6 +33,9 @@ public:
     virtual void NewFrame() {}
     virtual void RenderFrame(ImDrawData& DrawData) {}
     virtual void PresentFrame() {}
+
+public:
+    virtual void DrawTelemetry() const;
 };
 
 class IERenderer_Vulkan : public IERenderer

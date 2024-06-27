@@ -4,15 +4,41 @@
 
 #include "imgui_internal.h"
 
+#include "IECore.h"
+#include "IEUtils.h"
+
 namespace ImGui
 {
-    void StyleColorsIE(ImGuiStyle* StyleDestination)
+    void StyleIE(ImGuiStyle* StyleDestination)
     {
+        ImGuiIO& IO = ImGui::GetIO();
+        IO.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_IsSRGB;
+
+        const std::filesystem::path AppDirectory = IEUtils::FindFolderPathUpwards(std::filesystem::current_path(), "IEMidi");
+
+        const std::filesystem::path ImGuiIniFilePath = AppDirectory / "Settings/IEMidi_ImGui.ini";
+        const std::string ImGuiIniFilePathString = IEUtils::StringCast<char>(ImGuiIniFilePath.c_str());
+        ImGui::LoadIniSettingsFromDisk(ImGuiIniFilePathString.c_str());
+        IO.IniFilename = ImGuiIniFilePathString.c_str();
+        
+        const std::filesystem::path RobotoMonoFontPath = AppDirectory / "Resources/Fonts/Roboto_Mono/static/RobotoMono-Medium.ttf";
+        if (ImFont* const RobotoMonoFont = IO.Fonts->AddFontFromFileTTF(IEUtils::StringCast<char>(RobotoMonoFontPath.c_str()).c_str(), 22.0f))
+        {
+            IO.Fonts->Build();
+            IELOG_SUCCESS("Successfully loaded font (%s)", RobotoMonoFont->GetDebugName());
+        }
+
         if (ImGuiStyle* const Style = StyleDestination ? StyleDestination : &ImGui::GetStyle())
         {
             Style->FrameRounding = 2.0f;
             Style->WindowRounding = 2.0f;
-            Style->WindowBorderSize = 0.0f;
+            Style->WindowBorderSize = 1.0f;
+            Style->WindowPadding = ImVec2(5.0f, 5.0f);
+            Style->FramePadding = ImVec2(5.0f, 5.0f);
+            Style->CellPadding = ImVec2(5.0f, 5.0f);
+            Style->ItemSpacing = ImVec2(6.0f, 6.0f);
+            Style->ButtonTextAlign = ImVec2(0.5f, 0.5f);
+            Style->WindowTitleAlign = ImVec2(0.5f, 0.5f);
 
             if (ImVec4* const Colors = Style->Colors)
             {

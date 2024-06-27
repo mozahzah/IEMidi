@@ -4,6 +4,24 @@
 
 #include "IEUtils.h"
 
+void IERenderer::DrawTelemetry() const
+{
+    ImGuiIO& IO = ImGui::GetIO();
+
+    uint32_t TelemetryWindowFlags = ImGuiWindowFlags_NoTitleBar |
+                                    ImGuiWindowFlags_NoResize |
+                                    ImGuiWindowFlags_NoMove |
+                                    ImGuiWindowFlags_NoScrollbar |
+                                    ImGuiWindowFlags_NoScrollWithMouse |
+                                    ImGuiWindowFlags_NoCollapse |
+                                    ImGuiWindowFlags_NoMouseInputs;
+                                    
+    ImGui::SetNextWindowPos(ImVec2(0.0f, IO.DisplaySize.y - ImGui::GetFrameHeight()));
+    ImGui::Begin("Telemetry", nullptr, TelemetryWindowFlags);
+    ImGui::Text("Frame Duration (ms): %.2f | FPS: %.0f", 1000.0f / IO.Framerate, IO.Framerate);
+    ImGui::End();
+}
+
 IEResult IERenderer_Vulkan::Initialize()
 {
     IEResult Result(IEResult::Type::Fail, "Failed to initialize IERenderer");
@@ -12,7 +30,7 @@ IEResult IERenderer_Vulkan::Initialize()
     if (glfwInit() && glfwVulkanSupported())
     {
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-        m_AppWindow = glfwCreateWindow(m_DefaultAppWindowWidth, m_DefaultAppWindowHeight, "IEMidiMapper", nullptr, nullptr);
+        m_AppWindow = glfwCreateWindow(m_DefaultAppWindowWidth, m_DefaultAppWindowHeight, "IEMidi", nullptr, nullptr);
         if (m_AppWindow)
         {
             uint32_t RequiredInstanceExtensionCount = 0;
@@ -426,3 +444,5 @@ void IERenderer_Vulkan::DinitializeVulkan()
     vkDestroyDevice(m_VkDevice, m_VkAllocationCallback);
     vkDestroyInstance(m_VkInstance, m_VkAllocationCallback);
 }
+
+

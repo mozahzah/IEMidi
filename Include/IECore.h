@@ -12,6 +12,7 @@
 #include <format>
 #include <locale>
 #include <memory>
+#include <optional>
 #include <source_location>
 #include <stack>
 #include <stdarg.h>
