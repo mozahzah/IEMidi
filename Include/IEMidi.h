@@ -2,8 +2,12 @@
 
 #pragma once
 
-#include "IERenderer.h"
+#include "imgui.h"
 #include "RtMidi.h"
+
+#include "IECore.h"
+#include "IEMidiProfileManager.h"
+#include "IERenderer.h"
 
 enum class IEAppState : uint16_t
 {
@@ -16,14 +20,6 @@ enum class IEAppState : uint16_t
 
 class IEMidi
 {
-private:
-    struct IEMidiDevice
-    {
-        std::string DeviceName;
-        uint32_t InputPortNumber = -1;
-        uint32_t OutputPortNumber = -1;
-    };
-
 public:
     IEMidi();
 
@@ -49,7 +45,9 @@ private:
     std::unique_ptr<IERenderer> m_Renderer;
     std::unique_ptr<RtMidiIn> m_MidiIn;
     std::unique_ptr<RtMidiOut> m_MidiOut;
+    std::unique_ptr<IEMidiProfileManager> m_MidiProfileManager;
 
     IEAppState m_AppState = IEAppState::None;
-    std::optional<IEMidiDevice> m_CurrentDeviceSelected;
+
+    std::optional<IEMidiDeviceProfile> m_SelectedMidiDeviceProfile;
 };

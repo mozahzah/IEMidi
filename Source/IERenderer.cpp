@@ -444,5 +444,3 @@ void IERenderer_Vulkan::DinitializeVulkan()
     vkDestroyDevice(m_VkDevice, m_VkAllocationCallback);
     vkDestroyInstance(m_VkInstance, m_VkAllocationCallback);
 }
-
-

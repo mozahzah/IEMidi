@@ -2,7 +2,9 @@
 
 #include "IEMidi.h"
 
-IEMidi::IEMidi() : m_MidiIn(std::make_unique<RtMidiIn>()), m_MidiOut(std::make_unique<RtMidiOut>())
+#include "IEUtils.h"
+
+IEMidi::IEMidi() : m_MidiIn(std::make_unique<RtMidiIn>()), m_MidiOut(std::make_unique<RtMidiOut>()), m_MidiProfileManager(std::make_unique<IEMidiProfileManager>())
 {
     m_MidiIn->setErrorCallback(&IEMidi::OnRtMidiErrorCallback);
     m_MidiOut->setErrorCallback(&IEMidi::OnRtMidiErrorCallback);
@@ -47,9 +49,7 @@ void IEMidi::PreFrameRender()
 }
 
 void IEMidi::PostFrameRender()
-{
-    
-}
+{}
 
 void IEMidi::DrawMidiDeviceSelectionWindow()
 {
@@ -75,13 +75,13 @@ void IEMidi::DrawMidiDeviceSelectionWindow()
     RtMidiIn& MidiIn = GetMidiIn();
     for (int i = 0; i < MidiIn.getPortCount(); i++)
     {
-        std::string DeviceName = MidiIn.getPortName(i);
-        DeviceName.erase(DeviceName.size() - 2); // Remove port number and the space
+        std::string MidiDeviceName = MidiIn.getPortName(i);
+        MidiDeviceName.erase(MidiDeviceName.size() - 2); // Remove port number and the space
 
         ImGui::SetCursorPosX((WindowWidth * (1.0f - 0.5f)) * 0.5f);
-        if (ImGui::Button(DeviceName.c_str(), ImVec2(WindowWidth * 0.5f, ImGui::GetTextLineHeightWithSpacing())))
+        if (ImGui::Button(MidiDeviceName.c_str(), ImVec2(WindowWidth * 0.5f, ImGui::GetTextLineHeightWithSpacing())))
         {
-            OnMidiDeviceSelected(DeviceName, i);
+            OnMidiDeviceSelected(MidiDeviceName, i);
             break;
         }
     }
@@ -89,9 +89,9 @@ void IEMidi::DrawMidiDeviceSelectionWindow()
     ImGui::End();
 }
 
-IEResult IEMidi::OnMidiDeviceSelected(const std::string& DeviceName, uint32_t InputPortNumber)
+IEResult IEMidi::OnMidiDeviceSelected(const std::string& MidiDeviceName, uint32_t InputPortNumber)
 {                      
-    IEResult Result(IEResult::Type::Fail, "Failed to initialize Device");
+    IEResult Result(IEResult::Type::Fail, "Failed to initialize midi device");
 
     RtMidiIn& MidiIn = GetMidiIn();
     MidiIn.openPort(InputPortNumber);
@@ -104,7 +104,7 @@ IEResult IEMidi::OnMidiDeviceSelected(const std::string& DeviceName, uint32_t In
         {
             const uint32_t& OutputPortNumber = i;
 
-            if (MidiOut.getPortName(OutputPortNumber).find(DeviceName) != std::string::npos)
+            if (MidiOut.getPortName(OutputPortNumber).find(MidiDeviceName) != std::string::npos)
             {
                 MidiOut.openPort(OutputPortNumber);
                 if (MidiOut.isPortOpen())
@@ -112,12 +112,12 @@ IEResult IEMidi::OnMidiDeviceSelected(const std::string& DeviceName, uint32_t In
                     const std::vector<unsigned char> MidiMessage = { 0x91, 0x00, 0x64 }; // Get from user settings file
                     MidiOut.sendMessage(&MidiMessage);
 
-                    m_CurrentDeviceSelected = { DeviceName, InputPortNumber, OutputPortNumber };
+                    m_SelectedMidiDeviceProfile = { MidiDeviceName, InputPortNumber, OutputPortNumber };
                     m_AppState = IEAppState::MidiDeviceMapper;
 
                     Result.Type = IEResult::Type::Success;
                     std::ostringstream ResultMessageStream;
-                    ResultMessageStream << "Successfully initialized " << DeviceName;
+                    ResultMessageStream << "Successfully initialized " << MidiDeviceName;
                     Result.Message = ResultMessageStream.str();
                     break;
                 }
@@ -130,7 +130,7 @@ IEResult IEMidi::OnMidiDeviceSelected(const std::string& DeviceName, uint32_t In
 
 void IEMidi::DrawSelectedMidiDeviceMapperWindow()
 {
-    if (m_CurrentDeviceSelected.has_value())
+    if (m_SelectedMidiDeviceProfile.has_value())
     {
         ImGuiIO& IO = ImGui::GetIO();
 
@@ -149,7 +149,7 @@ void IEMidi::DrawSelectedMidiDeviceMapperWindow()
         ImGui::SetNextWindowSize(ImVec2(WindowWidth, WindowHeight), ImGuiCond_Always);
         ImGui::SetNextWindowPos(ImVec2(WindowPosX, WindowPosY));
         
-        ImGui::Begin(m_CurrentDeviceSelected->DeviceName.c_str(), nullptr, WindowFlags);
+        ImGui::Begin(m_SelectedMidiDeviceProfile->Name.c_str(), nullptr, WindowFlags);
         /* IEMidimapper */
         ImGui::End();
     }

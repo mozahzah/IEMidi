@@ -2,10 +2,24 @@
 
 #pragma once
 
+#ifdef _WIN32
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#include <shlobj.h>
+#include <comdef.h> 
+#elif defined(__APPLE__)
+#include <pwd.h>
+#include <unistd.h>
+#include <sys/types.h>
+#endif
+
 #include <cassert>
 #include <charconv>
 #include <chrono>
 #include <cstdint>
+#include <cstdio>
 #include <cstring>
 #include <cwchar>
 #include <filesystem>
