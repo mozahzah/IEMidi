@@ -428,9 +428,7 @@ IEResult IERenderer_Vulkan::InitializeInstancePhysicalDevice()
             {
                 m_VkPhysicalDevice = PhysicalDevice;
                 Result.Type = IEResult::Type::Success;
-                std::ostringstream ResultMessageStream;
-                ResultMessageStream << "Using physical device " << PhysicalDeviceProperties.deviceName;
-                Result.Message = ResultMessageStream.str();
+                Result.Message = std::format("Using physical device {}", PhysicalDeviceProperties.deviceName);
                 break;
             }
         }

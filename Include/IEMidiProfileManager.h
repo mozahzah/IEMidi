@@ -23,8 +23,4 @@ public:
 
 private:
     std::string ExtractFileContent(const std::filesystem::path& FilePath) const;
-
-private:
-    static constexpr uint32_t INITIAL_TREE_NODE_COUNT = 30;
-    static constexpr uint32_t INITIAL_TREE_ARENA_CHAR_COUNT = 2048;
 };

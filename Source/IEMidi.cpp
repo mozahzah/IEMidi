@@ -62,7 +62,7 @@ void IEMidi::DrawMidiDeviceSelectionWindow()
                                 ImGuiWindowFlags_NoCollapse;
 
     const float WindowWidth = IO.DisplaySize.x * 0.2f;
-    const float WindowHeight = IO.DisplaySize.y * 0.2f;
+    const float WindowHeight = IO.DisplaySize.y * 0.5f;
 
     const float WindowPosX = (IO.DisplaySize.x - WindowWidth) * 0.5f;
     const float WindowPosY = (IO.DisplaySize.y - WindowHeight) * 0.5f;
@@ -116,9 +116,7 @@ IEResult IEMidi::OnMidiDeviceSelected(const std::string& MidiDeviceName, uint32_
                     m_AppState = IEAppState::MidiDeviceMapper;
 
                     Result.Type = IEResult::Type::Success;
-                    std::ostringstream ResultMessageStream;
-                    ResultMessageStream << "Successfully initialized " << MidiDeviceName;
-                    Result.Message = ResultMessageStream.str();
+                    Result.Message = std::format("Successfully initialized {}", MidiDeviceName);
                     break;
                 }
             }
@@ -148,9 +146,10 @@ void IEMidi::DrawSelectedMidiDeviceMapperWindow()
 
         ImGui::SetNextWindowSize(ImVec2(WindowWidth, WindowHeight), ImGuiCond_Always);
         ImGui::SetNextWindowPos(ImVec2(WindowPosX, WindowPosY));
-        
-        ImGui::Begin(m_SelectedMidiDeviceProfile->Name.c_str(), nullptr, WindowFlags);
-        /* IEMidimapper */
+
+        const std::string WindowLabel = std::format("Editing {}", m_SelectedMidiDeviceProfile->Name);
+        ImGui::Begin(WindowLabel.c_str(), nullptr, WindowFlags);
+        /* Draw IEMidimapper */
         ImGui::End();
     }
 }

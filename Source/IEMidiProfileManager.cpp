@@ -4,6 +4,9 @@
 
 #include "IEUtils.h"
 
+static constexpr uint32_t INITIAL_TREE_NODE_COUNT = 30;
+static constexpr uint32_t INITIAL_TREE_ARENA_CHAR_COUNT = 2048;
+
 IEResult IEMidiProfileManager::SaveProfile(const IEMidiDeviceProfile& MidiDevice) const
 {
     IEResult Result(IEResult::Type::Fail, "Failed to save profile");
@@ -45,9 +48,7 @@ IEResult IEMidiProfileManager::SaveProfile(const IEMidiDeviceProfile& MidiDevice
                 if (EmitSize)
                 {
                     Result.Type = IEResult::Type::Success;
-                    std::ostringstream ResultMessageStream;
-                    ResultMessageStream << "Successfully saved profile " << MidiDeviceName << " into " << ProfilesFilePath;
-                    Result.Message = ResultMessageStream.str();
+                    Result.Message = std::format("Successfully saved profile {}, into {}", MidiDeviceName, ProfilesFilePath.string());
                 }
                 std::fclose(ProfilesFile);
             }
@@ -79,9 +80,7 @@ IEResult IEMidiProfileManager::LoadProfile(const IEMidiDeviceProfile& MidiDevice
                 // Load into the app
 
                 Result.Type = IEResult::Type::Success;
-                std::ostringstream ResultMessageStream;
-                ResultMessageStream << "Successfully loaded profile " << MidiDevice.Name << " into " << ProfilesFilePath;
-                Result.Message = ResultMessageStream.str();
+                Result.Message = std::format("Successfully loaded profile {}, into {}", MidiDevice.Name, ProfilesFilePath.string());
             }
         }
     }
@@ -118,9 +117,7 @@ IEResult IEMidiProfileManager::RemoveProfile(const IEMidiDeviceProfile& MidiDevi
                     }
 
                     Result.Type = IEResult::Type::Success;
-                    std::ostringstream ResultMessageStream;
-                    ResultMessageStream << "Successfully removed profile " << MidiDeviceName << " into " << ProfilesFilePath;
-                    Result.Message = ResultMessageStream.str();
+                    Result.Message = std::format("Successfully removed profile {}, from {}", MidiDevice.Name, ProfilesFilePath.string());
                     
                     std::fclose(ProfilesFile);
                 }
