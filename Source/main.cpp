@@ -18,6 +18,10 @@ int main()
             if (Renderer.PostImGuiContextCreated())
             {
                 ImGui::StyleColorsDark();
+                ImGuiIO& IO = ImGui::GetIO();
+                IO.IniFilename = nullptr;
+                IO.LogFilename = nullptr;
+
                 IEMidiApp.SetAppState(IEAppState::MidiDeviceSelection);
 
                 IEClock::time_point StartFrameTime = IEClock::now();
