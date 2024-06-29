@@ -17,7 +17,7 @@ int main()
         {
             if (Renderer.PostImGuiContextCreated())
             {
-                ImGui::StyleIE();
+                ImGui::StyleColorsDark();
                 IEMidiApp.SetAppState(IEAppState::MidiDeviceSelection);
 
                 IEClock::time_point StartFrameTime = IEClock::now();
@@ -32,7 +32,7 @@ int main()
                     Renderer.NewFrame();
                     ImGui::NewFrame();
 
-                    IEMidiApp.PreFrameRender();
+                    IEMidiApp.OnPreFrameRender();
                     
                     Renderer.DrawTelemetry();
                         
@@ -40,7 +40,7 @@ int main()
                     Renderer.RenderFrame(*ImGui::GetDrawData());
                     Renderer.PresentFrame();
 
-                    IEMidiApp.PostFrameRender();
+                    IEMidiApp.OnPostFrameRender();
 
                     CapturedDeltaTime = std::chrono::duration_cast<IEDurationMs>(IEClock::now() - StartFrameTime);
                     const int32_t SleepDurationMs = TARGET_FRAME_DURATION - CapturedDeltaTime.count();

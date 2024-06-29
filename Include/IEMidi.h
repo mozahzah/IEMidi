@@ -6,6 +6,7 @@
 #include "RtMidi.h"
 
 #include "IECore.h"
+#include "IEMidiEditor.h"
 #include "IEMidiProfileManager.h"
 #include "IERenderer.h"
 
@@ -13,7 +14,7 @@ enum class IEAppState : uint16_t
 {
     Loading,
     MidiDeviceSelection,
-    MidiDeviceMapper,
+    MidiDeviceEditor,
     Background,
     None
 };
@@ -27,11 +28,13 @@ public:
     IERenderer& GetRenderer() const { return *m_Renderer; }
     RtMidiIn& GetMidiIn() const { return *m_MidiIn; }
     RtMidiOut& GetMidiOut() const { return *m_MidiOut; }
+    IEMidiProfileManager& GetMidiProfileManager() const { return *m_MidiProfileManager; }
+    IEMidiEditor& GetMidiEditor() const { return *m_MidiEditor; }
 
     void SetAppState(IEAppState AppState);
 
-    void PreFrameRender();
-    void PostFrameRender();
+    void OnPreFrameRender();
+    void OnPostFrameRender();
 
     void DrawMidiDeviceSelectionWindow();
     IEResult OnMidiDeviceSelected(const std::string& DeviceName, uint32_t InputPortNumber);
@@ -46,6 +49,7 @@ private:
     std::unique_ptr<RtMidiIn> m_MidiIn;
     std::unique_ptr<RtMidiOut> m_MidiOut;
     std::unique_ptr<IEMidiProfileManager> m_MidiProfileManager;
+    std::unique_ptr<IEMidiEditor> m_MidiEditor;
 
     IEAppState m_AppState = IEAppState::None;
 

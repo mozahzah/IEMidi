@@ -4,18 +4,37 @@
 
 #include "IEUtils.h"
 
+static constexpr char IEMIDI_PROFILES_FILENAME[] = "profiles.yaml";
 static constexpr uint32_t INITIAL_TREE_NODE_COUNT = 30;
 static constexpr uint32_t INITIAL_TREE_ARENA_CHAR_COUNT = 2048;
 
-IEResult IEMidiProfileManager::SaveProfile(const IEMidiDeviceProfile& MidiDevice) const
+IEMidiProfileManager::IEMidiProfileManager()
+{
+    const std::filesystem::path IEMidiConfigFolderPath = IEUtils::GetIEMidiConfigFolderPath();
+    if (!IEMidiConfigFolderPath.empty())
+    {
+        const std::filesystem::path ProfilesFilePath = IEMidiConfigFolderPath / IEMIDI_PROFILES_FILENAME;
+        const std::string ProfilesFilePathString = ProfilesFilePath.string();
+        if (!std::filesystem::exists(ProfilesFilePath))
+        {
+            if (std::FILE* const ProfilesFile = std::fopen(ProfilesFilePathString.c_str(), "w"))
+            {
+                IELOG_SUCCESS("Successfully created profiles settings file %s", ProfilesFilePathString.c_str());
+            }
+        }
+        IELOG_SUCCESS("Using profiles settings file %s", ProfilesFilePathString.c_str());
+    }
+}
+
+IEResult IEMidiProfileManager::SaveProfile(const IEMidiDeviceProfile& MidiDeviceProfile) const
 {
     IEResult Result(IEResult::Type::Fail, "Failed to save profile");
 
-    const std::filesystem::path IEMidiDocumentsFolderPath = IEUtils::GetIEMidiDocumentsFolderPath();
-    if (!IEMidiDocumentsFolderPath.empty())
+    const std::filesystem::path IEMidiConfigFolderPath = IEUtils::GetIEMidiConfigFolderPath();
+    if (!IEMidiConfigFolderPath.empty())
     {
-        const std::filesystem::path ProfilesFilePath = IEMidiDocumentsFolderPath / "profiles.yaml";
-        if (std::filesystem::exists(ProfilesFilePath))
+        const std::filesystem::path ProfilesFilePath = IEMidiConfigFolderPath / IEMIDI_PROFILES_FILENAME;
+        if (std::FILE* const ProfilesFile = std::fopen(ProfilesFilePath.string().c_str(), "r+"))
         {
             const std::string Content = ExtractFileContent(ProfilesFilePath);
 
@@ -30,7 +49,7 @@ IEResult IEMidiProfileManager::SaveProfile(const IEMidiDeviceProfile& MidiDevice
                 Root |= ryml::MAP;
             }
 
-            const char* MidiDeviceName = MidiDevice.Name.c_str();
+            const char* MidiDeviceName = MidiDeviceProfile.Name.c_str();
             ryml::NodeRef ProfileNode = Root[MidiDeviceName];
             if (ProfileNode.is_seed())
             {
@@ -38,35 +57,53 @@ IEResult IEMidiProfileManager::SaveProfile(const IEMidiDeviceProfile& MidiDevice
                 ProfileNode |= ryml::MAP;
             }
 
-            // Save Midi Device Properties 
-            ProfileNode["InputMidiPortNumber"] << MidiDevice.InputPortNumber;
-            ProfileNode["OutputMidiPortNumber"] << MidiDevice.OutputPortNumber;
-
-            if (std::FILE* const ProfilesFile = std::fopen(ProfilesFilePath.string().c_str(), "r+"))
+            ryml::NodeRef ProfilePropertiesNode = ProfileNode["Properties"];
+            if (ProfilePropertiesNode.is_seed())
             {
-                const size_t EmitSize = ryml::emit_yaml(ProfilesTree, ProfilesFile);
-                if (EmitSize)
-                {
-                    Result.Type = IEResult::Type::Success;
-                    Result.Message = std::format("Successfully saved profile {}, into {}", MidiDeviceName, ProfilesFilePath.string());
-                }
-                std::fclose(ProfilesFile);
+                ProfilePropertiesNode.create();
+                ProfilePropertiesNode |= ryml::SEQ;
             }
+
+            ProfilePropertiesNode.clear_children();
+            for (const IEMidiDeviceProperty& MidiDeviceProperty : MidiDeviceProfile.Properties)
+            {
+                ryml::NodeRef ProfilePropertyNode = ProfilePropertiesNode.append_child();
+                ProfilePropertyNode.create();
+                ProfilePropertyNode |= ryml::MAP;
+
+                ProfilePropertyNode["Midi Message Type"] << static_cast<uint8_t>(MidiDeviceProperty.MidiMessageType);
+                ProfilePropertyNode["Midi Message"] << MidiDeviceProperty.MidiMessage;
+            }
+            
+            ryml::NodeRef ProfileInitialOutputMidiMessagesNode = ProfileNode["Initial Output Midi Messages"];
+            ProfileInitialOutputMidiMessagesNode.clear_children();
+            ProfileInitialOutputMidiMessagesNode << MidiDeviceProfile.InitialOutputMidiMessages;
+
+            const size_t EmitSize = ryml::emit_yaml(ProfilesTree, ProfilesFile);
+            if (EmitSize)
+            {
+                Result.Type = IEResult::Type::Success;
+                Result.Message = std::format("Successfully saved profile {}, into {}", MidiDeviceName, ProfilesFilePath.string());
+            }
+            std::fclose(ProfilesFile);
         }
     }
     return Result;
 }
 
-IEResult IEMidiProfileManager::LoadProfile(const IEMidiDeviceProfile& MidiDevice) const
+IEResult IEMidiProfileManager::LoadProfile(IEMidiDeviceProfile& MidiDeviceProfile) const
 {
     IEResult Result(IEResult::Type::Fail, "Failed to load profile");
 
-    const std::filesystem::path IEMidiDocumentsFolderPath = IEUtils::GetIEMidiDocumentsFolderPath();
-    if (!IEMidiDocumentsFolderPath.empty())
+    const std::filesystem::path IEMidiConfigFolderPath = IEUtils::GetIEMidiConfigFolderPath();
+    if (!IEMidiConfigFolderPath.empty())
     {
-        const std::filesystem::path ProfilesFilePath = IEMidiDocumentsFolderPath / "profiles.yaml";
+        const std::filesystem::path ProfilesFilePath = IEMidiConfigFolderPath / IEMIDI_PROFILES_FILENAME;
         if (std::filesystem::exists(ProfilesFilePath))
         {
+            Result.Type = IEResult::Type::Success;
+            Result.Message = std::format("Successfully found profiles config file {}", ProfilesFilePath.string());
+
             const std::string Content = ExtractFileContent(ProfilesFilePath);
 
             ryml::Tree ProfilesTree;
@@ -77,23 +114,37 @@ IEResult IEMidiProfileManager::LoadProfile(const IEMidiDeviceProfile& MidiDevice
             ryml::ConstNodeRef Root = ProfilesTree.rootref();
             if (Root.is_map())
             {
-                // Load into the app
+                ryml::ConstNodeRef ProfileNode = Root[MidiDeviceProfile.Name.c_str()];
+                ryml::ConstNodeRef ProfilePropertiesNode = ProfileNode["Properties"];
+                MidiDeviceProfile.Properties.resize(ProfilePropertiesNode.num_children());
+
+                for (int ChildPos = 0; ChildPos < ProfilePropertiesNode.num_children(); ChildPos++)
+                {
+                    ryml::ConstNodeRef ProfilePropertyNode = ProfilePropertiesNode.at(ChildPos);
+                    uint8_t MidiMessageType = 0;
+                    ProfilePropertyNode["Midi Message Type"] >> MidiMessageType;
+                    MidiDeviceProfile.Properties[ChildPos].MidiMessageType = static_cast<IEMidiMessageType>(MidiMessageType);
+                    ProfilePropertyNode["Midi Message"] >> MidiDeviceProfile.Properties[ChildPos].MidiMessage;
+                }
+
+                ryml::ConstNodeRef ProfileInitialOutputMidiMessagesNode = ProfileNode["Initial Output Midi Messages"];
+                ProfileInitialOutputMidiMessagesNode >> MidiDeviceProfile.InitialOutputMidiMessages;
 
                 Result.Type = IEResult::Type::Success;
-                Result.Message = std::format("Successfully loaded profile {}, into {}", MidiDevice.Name, ProfilesFilePath.string());
+                Result.Message = std::format("Successfully loaded profile {} from {}", MidiDeviceProfile.Name, ProfilesFilePath.string());
             }
         }
     }
     return Result;
 }
 
-IEResult IEMidiProfileManager::RemoveProfile(const IEMidiDeviceProfile& MidiDevice) const
+IEResult IEMidiProfileManager::RemoveProfile(const IEMidiDeviceProfile& MidiDeviceProfile) const
 {
     IEResult Result(IEResult::Type::Fail, "Failed to remove profile");
-    const std::filesystem::path IEMidiDocumentsFolderPath = IEUtils::GetIEMidiDocumentsFolderPath();
-    if (!IEMidiDocumentsFolderPath.empty())
+    const std::filesystem::path IEMidiConfigFolderPath = IEUtils::GetIEMidiConfigFolderPath();
+    if (!IEMidiConfigFolderPath.empty())
     {
-        const std::filesystem::path ProfilesFilePath = IEMidiDocumentsFolderPath / "profiles.yaml";
+        const std::filesystem::path ProfilesFilePath = IEMidiConfigFolderPath / IEMIDI_PROFILES_FILENAME;
         if (std::filesystem::exists(ProfilesFilePath))
         {
             const std::string Content = ExtractFileContent(ProfilesFilePath);
@@ -106,7 +157,7 @@ IEResult IEMidiProfileManager::RemoveProfile(const IEMidiDeviceProfile& MidiDevi
             ryml::NodeRef Root = ProfilesTree.rootref();
             if (Root.is_map())
             {
-                const char* MidiDeviceName = MidiDevice.Name.c_str();
+                const char* MidiDeviceName = MidiDeviceProfile.Name.c_str();
                 Root.remove_child(MidiDeviceName);
 
                 if (std::FILE* const ProfilesFile = std::fopen(ProfilesFilePath.string().c_str(), "w"))
@@ -117,7 +168,7 @@ IEResult IEMidiProfileManager::RemoveProfile(const IEMidiDeviceProfile& MidiDevi
                     }
 
                     Result.Type = IEResult::Type::Success;
-                    Result.Message = std::format("Successfully removed profile {}, from {}", MidiDevice.Name, ProfilesFilePath.string());
+                    Result.Message = std::format("Successfully removed profile {}, from {}", MidiDeviceProfile.Name, ProfilesFilePath.string());
                     
                     std::fclose(ProfilesFile);
                 }

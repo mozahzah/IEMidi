@@ -51,5 +51,5 @@ namespace IEUtils
     
     std::filesystem::path FindFolderPathDownwards(const std::filesystem::path& Directory, const std::filesystem::path& FolderName);
     std::filesystem::path FindFolderPathUpwards(const std::filesystem::path& SearchDirectory, const std::filesystem::path& FolderName);
-    std::filesystem::path GetIEMidiDocumentsFolderPath(); 
+    std::filesystem::path GetIEMidiConfigFolderPath(); 
 }

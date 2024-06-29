@@ -60,20 +60,22 @@ namespace IEUtils
         return std::filesystem::path();
     }
 
-    std::filesystem::path GetIEMidiDocumentsFolderPath()
+    std::filesystem::path GetIEMidiConfigFolderPath()
     {
+        static constexpr char IEMidiConfigFolderName[] = ".IEMidi";
 #ifdef _WIN32
-        PWSTR DocumentsFolderPath = NULL;
-        const HRESULT Result = SHGetKnownFolderPath(FOLDERID_Documents, 0, NULL, &DocumentsFolderPath);
+        PWSTR AppDataFolderPath = NULL;
+        const HRESULT Result = SHGetKnownFolderPath(FOLDERID_RoamingAppData, 0, NULL, &AppDataFolderPath);
         if (SUCCEEDED(Result))
         {
-            const _bstr_t BstrPDocumentsFolderPath(DocumentsFolderPath);
-            const std::wstring StrDocumentsFolderPath(BstrPDocumentsFolderPath, SysStringLen(BstrPDocumentsFolderPath));
+            const _bstr_t BstrAppDataFolderPath(AppDataFolderPath);
+            const std::wstring StrAppDataFolderPath(BstrAppDataFolderPath, SysStringLen(BstrAppDataFolderPath));
 
-            const std::filesystem::path IEMidiDocumentsFolderPath = std::filesystem::path(StrDocumentsFolderPath) / "IEMidi";
-            if (std::filesystem::exists(IEMidiDocumentsFolderPath) || std::filesystem::create_directory(IEMidiDocumentsFolderPath))
+            const std::filesystem::path IEMidiConfigFolderPath = std::filesystem::path(StrAppDataFolderPath) / IEMidiConfigFolderName;
+            if (std::filesystem::exists(IEMidiConfigFolderPath) || std::filesystem::create_directory(IEMidiConfigFolderPath))
             {
-                return IEMidiDocumentsFolderPath;
+                SetFileAttributes(IEMidiConfigFolderPath.string().c_str(), FILE_ATTRIBUTE_HIDDEN);
+                return IEMidiConfigFolderPath;
             }
         }
 #elif defined(__APPLE__)
@@ -83,14 +85,14 @@ namespace IEUtils
             HomeFolderPath = getpwuid(getuid())->pw_dir;
         }
 
-        const std::filesystem::path IEMidiDocumentsFolderPath = std::filesystem::path(HomeFolderPath) / "Documents/IEMidi";
-        if (std::filesystem::create_directory(IEMidiDocumentsFolderPath))
+        const std::filesystem::path IEMidiConfigFolderPath = std::filesystem::path(HomeFolderPath) / IEMidiConfigFolderName;
+        if (std::filesystem::exists(IEMidiConfigFolderPath) || std::filesystem::create_directory(IEMidiConfigFolderPath))
         {
-            return IEMidiDocumentsFolderPath;
+            return IEMidiConfigFolderPath;
         }
 #endif  
 
-        IELOG_ERROR("Failed to create ../Documents/IEMidi folder");
+        IELOG_ERROR("Failed to create IEMidiConfig folder");
         return std::filesystem::path();
     }
 }

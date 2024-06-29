@@ -39,18 +39,16 @@
 
 using IEClock = std::chrono::high_resolution_clock;
 using IEDurationMs = std::chrono::milliseconds;
-static constexpr uint32_t TARGET_FRAME_DURATION = 1000 / 60; // 50ms
+static constexpr uint32_t TARGET_FRAME_DURATION = 1000 / 15;
 
 /* Logging and Assertions */
 
 #define ENABLE_IE_ASSERT true
-inline bool IEAssert(bool Expression)
-{
-#if ENABLE_IE_ASSERT
-    assert(Expression);
+#ifdef ENABLE_IE_ASSERT
+    #define IEAssert(Expression) (assert(Expression), Expression)
+#else
+    #define IEAssert(Expression) (Expression)
 #endif
-    return Expression;
-};
 
 namespace Private
 {
