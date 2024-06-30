@@ -16,7 +16,7 @@ void IERenderer::DrawTelemetry() const
                                     ImGuiWindowFlags_NoCollapse |
                                     ImGuiWindowFlags_NoMouseInputs;
                                     
-    ImGui::SetNextWindowPos(ImVec2(0.0f, IO.DisplaySize.y - ImGui::GetFrameHeight()));
+    ImGui::SetNextWindowPos(ImVec2(0.0f, IO.DisplaySize.y - ImGui::GetFrameHeightWithSpacing()));
     ImGui::Begin("Telemetry", nullptr, TelemetryWindowFlags);
     ImGui::Text("Frame Duration (ms): %.2f | FPS: %.0f", 1000.0f / IO.Framerate, IO.Framerate);
     ImGui::End();

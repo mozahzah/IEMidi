@@ -17,7 +17,7 @@ int main()
         {
             if (Renderer.PostImGuiContextCreated())
             {
-                ImGui::StyleColorsDark();
+                ImGui::StyleIE();
                 ImGuiIO& IO = ImGui::GetIO();
                 IO.IniFilename = nullptr;
                 IO.LogFilename = nullptr;
@@ -37,7 +37,8 @@ int main()
                     ImGui::NewFrame();
 
                     IEMidiApp.OnPreFrameRender();
-                    
+                    ImGui::ShowDemoWindow();
+
                     Renderer.DrawTelemetry();
                         
                     ImGui::Render();

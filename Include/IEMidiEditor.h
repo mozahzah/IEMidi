@@ -11,5 +11,6 @@ public:
     void DrawMidiDeviceProfileEditor(IEMidiDeviceProfile& MidiDeviceProfile) const;
 
 private:
-    void DrawMidiDevicePropertyEditor(std::vector<IEMidiDeviceProperty>& MidiDeviceProperties) const;
+    void DrawMidiDeviceInputPropertyEditor(IEMidiDeviceProperty& MidiDeviceProperty) const;
+    void DrawInitialOutputMessageEditor(std::vector<unsigned char>& MidiDeviceInitialOutputMidiMessage) const;
 };

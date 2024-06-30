@@ -2,23 +2,36 @@
 
 #pragma once
 
-#include "ryml.hpp"
-#include "ryml_std.hpp"
-
 #include "IECore.h"
+
+static constexpr size_t MIDI_MESSAGE_BYTE_COUNT = 3;
 
 enum class IEMidiMessageType : uint8_t
 {
     None,
     NoteOnOff,
     ControlChange,
+
+    Count,
+};
+
+enum class IEMidiParameterType : uint8_t
+{
+    None,
+    Volume,
+    Mute,
+    ConsoleCommand,
+    BatchFile,
+
+    Count,
 };
 
 struct IEMidiDeviceProperty
 {
 public:
     IEMidiMessageType MidiMessageType = IEMidiMessageType::None;
-    std::vector<unsigned char> MidiMessage = std::vector<unsigned char>(3);
+    IEMidiParameterType MidiParameterType = IEMidiParameterType::None;
+    std::vector<unsigned char> MidiMessage = std::vector<unsigned char>(MIDI_MESSAGE_BYTE_COUNT);
 
 public:
     bool bIsRecording = false;

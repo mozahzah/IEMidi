@@ -54,4 +54,6 @@ private:
     IEAppState m_AppState = IEAppState::None;
 
     std::optional<IEMidiDeviceProfile> m_SelectedMidiDeviceProfile;
+
+    bool m_bOpenMidiEditorWindow = false;
 };

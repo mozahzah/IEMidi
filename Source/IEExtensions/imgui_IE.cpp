@@ -22,29 +22,61 @@ namespace ImGui
         IO.IniFilename = ImGuiIniFilePathString.c_str();
         
         const std::filesystem::path RobotoMonoFontPath = AppDirectory / "Resources/Fonts/Roboto_Mono/static/RobotoMono-Medium.ttf";
-        if (ImFont* const RobotoMonoFont = IO.Fonts->AddFontFromFileTTF(IEUtils::StringCast<char>(RobotoMonoFontPath.c_str()).c_str(), 22.0f))
+        if (ImFont* const RobotoMonoFont = IO.Fonts->AddFontFromFileTTF(IEUtils::StringCast<char>(RobotoMonoFontPath.c_str()).c_str(), 30.0f))
         {
             IO.Fonts->Build();
+            IO.FontGlobalScale = 0.5f;
             IELOG_SUCCESS("Successfully loaded font (%s)", RobotoMonoFont->GetDebugName());
         }
 
         if (ImGuiStyle* const Style = StyleDestination ? StyleDestination : &ImGui::GetStyle())
         {
-            Style->FrameRounding = 2.0f;
-            Style->WindowRounding = 2.0f;
+            /* Main */
+            Style->WindowPadding = ImVec2(8.0f, 8.0f);
+            Style->FramePadding = ImVec2(6.0f, 6.0f);
+            Style->ItemSpacing = ImVec2(15.0f, 6.0f);
+            Style->ItemInnerSpacing = ImVec2(8.0f, 6.0f);
+            Style->IndentSpacing = 20.0f;
+            Style->ScrollbarSize = 20.0f;
+            Style->GrabMinSize = 10.0f;
+
+            /* Borders */
             Style->WindowBorderSize = 1.0f;
-            Style->WindowPadding = ImVec2(5.0f, 5.0f);
-            Style->FramePadding = ImVec2(5.0f, 5.0f);
-            Style->CellPadding = ImVec2(5.0f, 5.0f);
-            Style->ItemSpacing = ImVec2(6.0f, 6.0f);
-            Style->ButtonTextAlign = ImVec2(0.5f, 0.5f);
+            Style->ChildBorderSize = 1.0f;
+            Style->PopupBorderSize = 1.0f;
+            Style->FrameBorderSize = 0.0f;
+            Style->TabBorderSize = 0.0f;
+            Style->TabBarBorderSize = 1.0f;
+
+            /* Rounding */
+            Style->WindowRounding = 7.0f;
+            Style->ChildRounding = 7.0f;
+            Style->FrameRounding = 2.0f;
+            Style->PopupRounding = 2.0f;
+            Style->ScrollbarRounding = 4.0f;
+            Style->GrabRounding = 2.0f;
+            Style->TabRounding = 2.0f;
+
+            /* Tables */  
+            Style->CellPadding = ImVec2(7.0f, 7.0f);
+            Style->TableAngledHeadersAngle = 35.0f;
+            Style->TableAngledHeadersTextAlign = ImVec2(0.5f, 0.0f);
+
+            /* Widgets */
             Style->WindowTitleAlign = ImVec2(0.5f, 0.5f);
+            Style->WindowMenuButtonPosition = ImGuiDir_Left;
+            Style->ColorButtonPosition = ImGuiDir_Left;
+            Style->ButtonTextAlign = ImVec2(0.5f, 0.5f);
+            Style->SelectableTextAlign = ImVec2(0.5f, 0.5f);
+            Style->SeparatorTextBorderSize = 5.0f;
+            Style->SeparatorTextAlign = ImVec2(0.5f, 0.5f);
+            Style->SeparatorTextPadding = ImVec2(20.0f, 4.0f);
 
             if (ImVec4* const Colors = Style->Colors)
             {
                 Colors[ImGuiCol_Text]                   = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
                 Colors[ImGuiCol_TextDisabled]           = ImVec4(0.50f, 0.50f, 0.50f, 1.00f);
-                Colors[ImGuiCol_WindowBg]               = ImVec4(1.00f, 1.00f, 1.00f, 0.00f);
+                Colors[ImGuiCol_WindowBg]               = ImVec4(0.00f, 0.00f, 0.00f, 1.00f);
                 Colors[ImGuiCol_ChildBg]                = ImVec4(0.00f, 0.00f, 0.00f, 0.71f);
                 Colors[ImGuiCol_PopupBg]                = ImVec4(0.00f, 0.00f, 0.00f, 0.71f);
                 Colors[ImGuiCol_Border]                 = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
