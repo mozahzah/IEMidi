@@ -31,6 +31,8 @@ struct IEMidiDeviceProperty
 public:
     IEMidiMessageType MidiMessageType = IEMidiMessageType::None;
     IEMidiParameterType MidiParameterType = IEMidiParameterType::None;
+    std::string ConsoleCommand = std::string();
+    std::string BatchFilePath = std::string();
     std::vector<unsigned char> MidiMessage = std::vector<unsigned char>(MIDI_MESSAGE_BYTE_COUNT);
 
 public:

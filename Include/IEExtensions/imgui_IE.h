@@ -3,8 +3,10 @@
 #pragma once
 
 #include "imgui.h"
+#include "imgui_internal.h"
 
 namespace ImGui
 {
     void StyleIE(ImGuiStyle* StyleDestination = nullptr);
+    void ClearCurrentWindowStoredStates();
 }

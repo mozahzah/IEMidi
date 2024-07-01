@@ -95,4 +95,26 @@ namespace IEUtils
         IELOG_ERROR("Failed to create IEMidiConfig folder");
         return std::filesystem::path();
     }
+
+    bool IsFileHidden(const std::filesystem::path& Path)
+    {
+        bool bIsHidden = true;
+        if (std::filesystem::exists(Path))
+        {
+#ifdef _WIN32
+            const DWORD Attributes = GetFileAttributes(Path.string().c_str());
+            if (Attributes & FILE_ATTRIBUTE_HIDDEN == 0)
+            {
+                bIsHidden = false;
+            }
+#elif defined(__APPLE__)
+            const std::string FileName = Path.filename().string();
+            if (!FileName.empty() && FileName[0] != '.')
+            {
+                bIsHidden = false;
+            }
+#endif
+        }
+        return bIsHidden;
+    }
 }

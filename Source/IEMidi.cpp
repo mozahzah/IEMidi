@@ -58,11 +58,11 @@ void IEMidi::DrawMidiDeviceSelectionWindow()
 {
     ImGuiIO& IO = ImGui::GetIO();
 
-    const uint32_t WindowFlags =    ImGuiWindowFlags_NoResize |
-                                    ImGuiWindowFlags_NoMove |
-                                    ImGuiWindowFlags_NoScrollbar |
-                                    ImGuiWindowFlags_NoScrollWithMouse |
-                                    ImGuiWindowFlags_NoCollapse;
+    static constexpr uint32_t WindowFlags = ImGuiWindowFlags_NoResize |
+                                            ImGuiWindowFlags_NoMove |
+                                            ImGuiWindowFlags_NoScrollbar |
+                                            ImGuiWindowFlags_NoScrollWithMouse |
+                                            ImGuiWindowFlags_NoCollapse;
 
     const float WindowWidth = IO.DisplaySize.x * 0.2f;
     const float WindowHeight = IO.DisplaySize.y * 0.5f;
@@ -79,7 +79,6 @@ void IEMidi::DrawMidiDeviceSelectionWindow()
     for (int InputPortNumber = 0; InputPortNumber < MidiIn.getPortCount(); InputPortNumber++)
     {
         const std::string MidiDeviceName = MidiIn.getPortName(InputPortNumber);
-
         ImGui::SetCursorPosX((WindowWidth * (1.0f - 0.5f)) * 0.5f);
         if (ImGui::Button(MidiDeviceName.c_str(), ImVec2(WindowWidth * 0.5f, ImGui::GetTextLineHeightWithSpacing())))
         {
@@ -145,18 +144,18 @@ void IEMidi::DrawSelectedMidiDeviceMapperWindow()
     {
         ImGuiIO& IO = ImGui::GetIO();
 
-        const uint32_t WindowFlags =    ImGuiWindowFlags_NoResize |
-                                        ImGuiWindowFlags_NoMove |
-                                        ImGuiWindowFlags_NoScrollbar |
-                                        ImGuiWindowFlags_NoScrollWithMouse |
-                                        ImGuiWindowFlags_NoCollapse;
+        static constexpr uint32_t WindowFlags = ImGuiWindowFlags_NoResize |
+                                                ImGuiWindowFlags_NoMove |
+                                                ImGuiWindowFlags_NoScrollbar |
+                                                ImGuiWindowFlags_NoScrollWithMouse |
+                                                ImGuiWindowFlags_NoCollapse;
 
 
         const float WindowWidth = IO.DisplaySize.x * 0.8f;
-        const float WindowHeight = IO.DisplaySize.y * 0.5f;
+        const float WindowHeight = IO.DisplaySize.y;
 
-        const float WindowPosX = (IO.DisplaySize.x - WindowWidth) * 0.5f;
-        const float WindowPosY = (IO.DisplaySize.y - WindowHeight) * 0.5f;
+        const float WindowPosX = (IO.DisplaySize.x - WindowWidth);
+        const float WindowPosY = (IO.DisplaySize.y - WindowHeight);
 
         ImGui::SetNextWindowSize(ImVec2(WindowWidth, WindowHeight), ImGuiCond_Always);
         ImGui::SetNextWindowPos(ImVec2(WindowPosX, WindowPosY));
