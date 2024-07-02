@@ -13,7 +13,7 @@ static constexpr char PROFILE_PROPERTIES_NODE_NAME[] = "Properties";
 static constexpr char MIDI_MESSAGE_TYPE_KEY_NAME[] = "Midi Message Type";
 static constexpr char MIDI_PARAMETER_TYPE_KEY_NAME[] = "Midi Parameter Type";
 static constexpr char CONSOLE_COMMAND_KEY_NAME[] = "Console Command";
-static constexpr char BATCH_FILE_PATH_KEY_NAME[] = "Batch File Path";
+static constexpr char OPEN_FILE_PATH_KEY_NAME[] = "Open File Path";
 static constexpr char MIDI_MESSAGE_KEY_NAME[] = "Midi Message";
 static constexpr char INITIAL_OUTPUT_MIDI_MESSAGES_KEY_NAME[] = "Initial Output Midi Messages";
 
@@ -85,7 +85,7 @@ IEResult IEMidiProfileManager::SaveProfile(const IEMidiDeviceProfile& MidiDevice
                 ProfilePropertyNode[MIDI_MESSAGE_TYPE_KEY_NAME] << static_cast<uint8_t>(MidiDeviceProperty.MidiMessageType);
                 ProfilePropertyNode[MIDI_PARAMETER_TYPE_KEY_NAME] << static_cast<uint8_t>(MidiDeviceProperty.MidiParameterType);
                 ProfilePropertyNode[CONSOLE_COMMAND_KEY_NAME] << MidiDeviceProperty.ConsoleCommand;
-                ProfilePropertyNode[BATCH_FILE_PATH_KEY_NAME] << MidiDeviceProperty.BatchFilePath;
+                ProfilePropertyNode[OPEN_FILE_PATH_KEY_NAME] << MidiDeviceProperty.OpenFilePath;
                 ProfilePropertyNode[MIDI_MESSAGE_KEY_NAME] << MidiDeviceProperty.MidiMessage;
             }
             
@@ -164,11 +164,11 @@ IEResult IEMidiProfileManager::LoadProfile(IEMidiDeviceProfile& MidiDeviceProfil
                         }
                     }
 
-                    if (ProfilePropertyNode.has_child(BATCH_FILE_PATH_KEY_NAME))
+                    if (ProfilePropertyNode.has_child(OPEN_FILE_PATH_KEY_NAME))
                     {
-                        if (!ProfilePropertyNode[BATCH_FILE_PATH_KEY_NAME].val().empty())
+                        if (!ProfilePropertyNode[OPEN_FILE_PATH_KEY_NAME].val().empty())
                         {
-                            ProfilePropertyNode[BATCH_FILE_PATH_KEY_NAME] >> MidiDeviceProfile.Properties[ChildPos].BatchFilePath;
+                            ProfilePropertyNode[OPEN_FILE_PATH_KEY_NAME] >> MidiDeviceProfile.Properties[ChildPos].OpenFilePath;
                         }
                     }
 

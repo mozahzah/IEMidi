@@ -3,7 +3,7 @@
 #include "IEMidiEditor.h"
 
 #include "imgui.h"
-#include "IEExtensions/imgui_IE.h"
+#include "IEExtensions/ie.imgui.h"
 
 #include "IEUtils.h"
 
@@ -66,8 +66,6 @@ void IEMidiEditor::DrawMidiDeviceInputPropertyEditor(IEMidiDeviceProperty& MidiD
 {
     if (ImGui::BeginTable("Midi Property Editor", MidiDevicePropertyEditorColumnCount, ImGuiTableFlags_Hideable | ImGuiTableFlags_SizingFixedFit))
     {
-        ImGui::TableHeadersRow();
-
         static const char MessageTypesStringArray[static_cast<int>(IEMidiMessageType::Count)][std::size("-Select Message Type")] =
         {   "-Select Message Type",
             "NoteOnOff",
@@ -92,7 +90,7 @@ void IEMidiEditor::DrawMidiDeviceInputPropertyEditor(IEMidiDeviceProperty& MidiD
             "Volume",
             "Mute",
             "Console Command",
-            "Batch File" };
+            "Open File" };
         ImGui::TableNextColumn();
         ImGui::SetNextItemWidth(ImGui::CalcTextSize("-Select Parameter Type").x * 1.3f);
         if (ImGui::BeginCombo("##2", ParameterTypesStringArray[static_cast<int>(MidiDeviceProperty.MidiParameterType)]))
@@ -122,10 +120,10 @@ void IEMidiEditor::DrawMidiDeviceInputPropertyEditor(IEMidiDeviceProperty& MidiD
                 MidiDeviceProperty.ConsoleCommand = Buffer;
                 ImGui::TableNextColumn();
                 ImGui::TableSetColumnEnabled(-1, false);
-                MidiDeviceProperty.BatchFilePath.clear();
+                MidiDeviceProperty.OpenFilePath.clear();
                 break;
             }
-            case IEMidiParameterType::BatchFile:
+            case IEMidiParameterType::OpenFile:
             {
                 ImGui::TableNextColumn();
                 ImGui::TableSetColumnEnabled(-1, false);
@@ -133,14 +131,14 @@ void IEMidiEditor::DrawMidiDeviceInputPropertyEditor(IEMidiDeviceProperty& MidiD
                 ImGui::TableNextColumn();
                 ImGui::TableSetColumnEnabled(-1, true);
                 char Buffer[256] = {0}; 
-                std::strncpy(Buffer, MidiDeviceProperty.BatchFilePath.c_str(), sizeof(Buffer) - 1);
+                std::strncpy(Buffer, MidiDeviceProperty.OpenFilePath.c_str(), sizeof(Buffer) - 1);
                 Buffer[sizeof(Buffer) - 1] = '\0';
                 ImGui::SetNextItemWidth(InputBoxSizeWidth);
-                ImGui::InputText("##Input Batch File Path", Buffer, std::size(Buffer));
-                MidiDeviceProperty.BatchFilePath = Buffer;
+                ImGui::InputText("##Input Open File Path", Buffer, std::size(Buffer));
+                MidiDeviceProperty.OpenFilePath = Buffer;
 
                 ImGui::SameLine();
-                DrawFileFinder(MidiDeviceProperty.BatchFilePath);
+                ImGui::FileFinder("Find File", 3, MidiDeviceProperty.OpenFilePath);
                 break;
             }
             default:
@@ -151,7 +149,7 @@ void IEMidiEditor::DrawMidiDeviceInputPropertyEditor(IEMidiDeviceProperty& MidiD
 
                 ImGui::TableNextColumn();
                 ImGui::TableSetColumnEnabled(-1, false);
-                MidiDeviceProperty.BatchFilePath.clear();
+                MidiDeviceProperty.OpenFilePath.clear();
                 break;
             }
         }
@@ -197,85 +195,5 @@ void IEMidiEditor::DrawInitialOutputMessageEditor(std::vector<unsigned char>& Mi
         ImGui::PopStyleColor();
 
         ImGui::EndTable();
-    }
-}
-
-void IEMidiEditor::DrawFileFinder(std::string& SelectedFile) const
-{
-    const char FileFinderPopupLabel[] = "File Finder";
-    if (ImGui::Selectable("...", &m_bFileFinderOpen))
-    {
-        ImGui::OpenPopup(FileFinderPopupLabel);
-    }
-
-    static constexpr uint32_t WindowFlags = ImGuiWindowFlags_NoResize |
-                                            ImGuiWindowFlags_NoMove |
-                                            ImGuiWindowFlags_NoScrollbar |
-                                            ImGuiWindowFlags_NoScrollWithMouse |
-                                            ImGuiWindowFlags_NoCollapse;
-
-    ImGuiIO& IO = ImGui::GetIO();
-    const float WindowWidth = IO.DisplaySize.x * 0.5f;
-    const float WindowHeight = IO.DisplaySize.y * 0.7f;
-
-    const float WindowPosX = (IO.DisplaySize.x - WindowWidth) * 0.5f;
-    const float WindowPosY = (IO.DisplaySize.y - WindowHeight) * 0.5f;
-
-    ImGui::SetNextWindowSize(ImVec2(WindowWidth, WindowHeight), ImGuiCond_Always);
-    ImGui::SetNextWindowPos(ImVec2(WindowPosX, WindowPosY));
-
-    if (ImGui::BeginPopupModal(FileFinderPopupLabel, &m_bFileFinderOpen, WindowFlags))
-    {
-        ImGui::PushStyleVar(ImGuiStyleVar_SelectableTextAlign, ImVec2(0.0f, 0.5f));
-        if (ImGui::Selectable("...##Inner", false, ImGuiSelectableFlags_DontClosePopups))
-        {
-            m_RootFileFinderSearchPath = m_RootFileFinderSearchPath.parent_path();
-        }
-        ImGui::SameLine();
-        ImGui::Text(m_RootFileFinderSearchPath.string().c_str());
-        ImGui::PopStyleVar();
-
-        DrawFileFinderTree(m_RootFileFinderSearchPath, 3, SelectedFile);
-        ImGui::EndPopup();
-    }
-}
-
-void IEMidiEditor::DrawFileFinderTree(const std::filesystem::path& CurrentPath, uint8_t Depth, std::string& SelectedFile) const
-{
-    if (!CurrentPath.empty())
-    {
-        if (Depth == 0)
-        {
-            m_RootFileFinderSearchPath = CurrentPath;
-            ImGui::ClearCurrentWindowStoredStates();
-            return;
-        }
-
-        for (std::filesystem::directory_iterator It = std::filesystem::directory_iterator(CurrentPath);
-            It != std::filesystem::directory_iterator(); It++)
-        {
-            const std::filesystem::path& SubPath = *It;
-
-            if (!IEUtils::IsFileHidden(SubPath))
-            {
-                if (std::filesystem::is_directory(SubPath))
-                {
-                    if (ImGui::TreeNodeEx(SubPath.filename().string().c_str()))
-                    {
-                        DrawFileFinderTree(SubPath, Depth - 1, SelectedFile);
-                        ImGui::TreePop();
-                    }
-                }
-                else
-                {
-                    ImGui::PushStyleVar(ImGuiStyleVar_SelectableTextAlign, ImVec2(0.0f, 0.5f));
-                    if (ImGui::Selectable(SubPath.filename().string().c_str()))
-                    {
-                        SelectedFile = SubPath.string();
-                    }
-                    ImGui::PopStyleVar();
-                }   
-            }
-        }
     }
 }

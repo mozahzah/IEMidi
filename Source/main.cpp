@@ -2,7 +2,7 @@
 
 #include "IEMidi.h"
 
-#include "IEExtensions/imgui_IE.h"
+#include "IEExtensions/ie.imgui.h"
 
 int main()
 {

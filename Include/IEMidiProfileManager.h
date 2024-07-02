@@ -21,7 +21,7 @@ enum class IEMidiParameterType : uint8_t
     Volume,
     Mute,
     ConsoleCommand,
-    BatchFile,
+    OpenFile,
 
     Count,
 };
@@ -32,7 +32,7 @@ public:
     IEMidiMessageType MidiMessageType = IEMidiMessageType::None;
     IEMidiParameterType MidiParameterType = IEMidiParameterType::None;
     std::string ConsoleCommand = std::string();
-    std::string BatchFilePath = std::string();
+    std::string OpenFilePath = std::string();
     std::vector<unsigned char> MidiMessage = std::vector<unsigned char>(MIDI_MESSAGE_BYTE_COUNT);
 
 public:

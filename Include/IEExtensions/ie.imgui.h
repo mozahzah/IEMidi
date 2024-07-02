@@ -5,8 +5,16 @@
 #include "imgui.h"
 #include "imgui_internal.h"
 
+#include "IECore.h"
+
 namespace ImGui
 {
+    /* Styles */
     void StyleIE(ImGuiStyle* StyleDestination = nullptr);
+
+    /* Widgets */
+    void FileFinder(const char* Label, int Depth, std::string& SelectedFile);
+
+    /* Other */
     void ClearCurrentWindowStoredStates();
 }

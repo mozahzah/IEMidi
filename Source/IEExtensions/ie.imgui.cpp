@@ -1,6 +1,6 @@
 // Copyright © 2024 mozahzah (Incus Entertainment). All rights reserved.
 
-#include "IEExtensions/imgui_IE.h"
+#include "IEExtensions/ie.imgui.h"
 
 #include "IECore.h"
 #include "IEUtils.h"
@@ -129,6 +129,92 @@ namespace ImGui
                 Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.35f);
             }
         }
+    }
+
+    void FileFinder(const char* Label, int Depth, std::string& SelectedFile)
+    {
+        static bool bFileFinderOpen = false;
+        static std::filesystem::path RootFileFinderSearchPath = std::filesystem::current_path();
+
+        auto DrawFileFinderTree = [](const std::filesystem::path& CurrentPath, int Depth, std::string& SelectedFile, auto&& DrawFileFinderTree)
+            {
+                if (!CurrentPath.empty())
+                {
+                    if (Depth <= 0)
+                    {
+                        RootFileFinderSearchPath = CurrentPath;
+                        ImGui::ClearCurrentWindowStoredStates();
+                        return;
+                    }
+
+                    for (std::filesystem::directory_iterator It = std::filesystem::directory_iterator(CurrentPath);
+                        It != std::filesystem::directory_iterator(); It++)
+                    {
+                        const std::filesystem::path& SubPath = *It;
+
+                        if (!IEUtils::IsFileHidden(SubPath))
+                        {
+                            if (std::filesystem::is_directory(SubPath))
+                            {
+                                if (ImGui::TreeNodeEx(SubPath.filename().string().c_str()))
+                                {
+                                    DrawFileFinderTree(SubPath, Depth - 1, SelectedFile, DrawFileFinderTree);
+                                    ImGui::TreePop();
+                                }
+                            }
+                            else
+                            {
+                                ImGui::PushStyleVar(ImGuiStyleVar_SelectableTextAlign, ImVec2(0.0f, 0.5f));
+                                if (ImGui::Selectable(SubPath.filename().string().c_str()))
+                                {
+                                    SelectedFile = SubPath.string();
+                                }
+                                ImGui::PopStyleVar();
+                            }
+                        }
+                    }
+                }
+            };
+
+        const char* FileFinderPopupLabel = Label ? Label : "File Finder";
+        if (ImGui::Selectable("...##Outer", &bFileFinderOpen))
+        {
+            ImGui::OpenPopup(FileFinderPopupLabel);
+        }
+
+        static constexpr uint32_t WindowFlags = ImGuiWindowFlags_NoResize |
+                                                ImGuiWindowFlags_NoMove |
+                                                ImGuiWindowFlags_NoScrollbar |
+                                                ImGuiWindowFlags_NoScrollWithMouse |
+                                                ImGuiWindowFlags_NoCollapse;
+
+        ImGuiIO& IO = ImGui::GetIO();
+        const float WindowWidth = IO.DisplaySize.x * 0.5f;
+        const float WindowHeight = IO.DisplaySize.y * 0.7f;
+
+        const float WindowPosX = (IO.DisplaySize.x - WindowWidth) * 0.5f;
+        const float WindowPosY = (IO.DisplaySize.y - WindowHeight) * 0.5f;
+
+        ImGui::SetNextWindowSize(ImVec2(WindowWidth, WindowHeight), ImGuiCond_Always);
+        ImGui::SetNextWindowPos(ImVec2(WindowPosX, WindowPosY));
+
+        if (ImGui::BeginPopupModal(FileFinderPopupLabel, &bFileFinderOpen, WindowFlags))
+        {
+            ImGui::PushStyleVar(ImGuiStyleVar_SelectableTextAlign, ImVec2(0.0f, 0.5f));
+            if (ImGui::Selectable("...", false, ImGuiSelectableFlags_DontClosePopups, ImVec2(ImGui::CalcTextSize("..."))))
+            {
+                RootFileFinderSearchPath = RootFileFinderSearchPath.parent_path();
+            }
+            ImGui::SameLine();
+            ImGui::Text("%s", RootFileFinderSearchPath.string().c_str());
+            ImGui::PopStyleVar();
+
+            DrawFileFinderTree(RootFileFinderSearchPath, 3, SelectedFile, DrawFileFinderTree);
+
+            ImGui::EndPopup();
+        }
+
+        
     }
 
     void ClearCurrentWindowStoredStates()
