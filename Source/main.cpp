@@ -31,13 +31,26 @@ int main()
                 {
                     StartFrameTime = IEClock::now();
 
+                    if (Renderer.IsAppWindowMinimized())
+                    {
+                        IEMidiApp.SetAppState(IEAppState::Background);
+                        IEMidiApp.ProcessMidi();
+                        continue;
+                    }
+                    else if (IEMidiApp.GetAppState() == IEAppState::Background)
+                    {
+                        IEMidiApp.SetAppState(IEAppState::MidiDeviceSelection);
+                        IEMidiApp.GetMidiIn().closePort();
+                        IEMidiApp.GetMidiOut().closePort();
+                        IEMidiApp.GetMidiIn().cancelCallback();
+                    }
+
                     Renderer.PollEvents();
                     Renderer.CheckAndResizeSwapChain();
                     Renderer.NewFrame();
                     ImGui::NewFrame();
 
                     IEMidiApp.OnPreFrameRender();
-                    ImGui::ShowDemoWindow();
 
                     Renderer.DrawTelemetry();
                         

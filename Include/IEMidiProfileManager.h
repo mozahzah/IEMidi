@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "IECore.h"
+#include "IECore/IECore.h"
 
 static constexpr size_t MIDI_MESSAGE_BYTE_COUNT = 3;
 
@@ -45,6 +45,10 @@ public:
     IEMidiDeviceProfile() = delete;
     IEMidiDeviceProfile(const std::string& NameID, uint32_t InputPortNumber, uint32_t OutputPortNumer) :
                         Name(NameID), m_InputPortNumber(InputPortNumber), m_OutputPortNumber(OutputPortNumer) {}
+    bool operator==(const IEMidiDeviceProfile& other) const
+    {
+        return Name == other.Name;
+    }
 
     uint32_t GetInputPortNumber() const { return m_InputPortNumber; }
     uint32_t GetOutputPortNumber() const { return m_OutputPortNumber; }
@@ -59,12 +63,21 @@ private:
     uint32_t m_OutputPortNumber = -1;
 };
 
+struct IEMidiDeviceProfileHash
+{
+    std::size_t operator()(const IEMidiDeviceProfile& MidiDeviceProfile) const
+    {
+        return std::hash<std::string>()(MidiDeviceProfile.Name);
+    }
+};
+
 class IEMidiProfileManager
 {
 public:
     IEMidiProfileManager();
     
 public:
+    bool HasProfile(const IEMidiDeviceProfile& MidiDeviceProfile) const;
     IEResult SaveProfile(const IEMidiDeviceProfile& MidiDeviceProfile) const;
     IEResult LoadProfile(IEMidiDeviceProfile& MidiDeviceProfile) const;
     IEResult RemoveProfile(const IEMidiDeviceProfile& MidiDeviceProfile) const;

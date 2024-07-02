@@ -2,8 +2,8 @@
 
 #include "IEExtensions/ie.imgui.h"
 
-#include "IECore.h"
-#include "IEUtils.h"
+#include "IECore/IECore.h"
+#include "IECore/IEUtils.h"
 
 namespace ImGui
 {
@@ -213,8 +213,6 @@ namespace ImGui
 
             ImGui::EndPopup();
         }
-
-        
     }
 
     void ClearCurrentWindowStoredStates()

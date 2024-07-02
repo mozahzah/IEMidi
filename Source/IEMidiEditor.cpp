@@ -5,7 +5,7 @@
 #include "imgui.h"
 #include "IEExtensions/ie.imgui.h"
 
-#include "IEUtils.h"
+#include "IECore/IEUtils.h"
 
 static constexpr size_t MidiDevicePropertyEditorColumnCount = 7;
 static constexpr size_t MidiDeviceInitialOutputMessageEditorColumnCount = 2;

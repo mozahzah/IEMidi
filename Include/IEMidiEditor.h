@@ -2,7 +2,8 @@
 
 #pragma once
 
-#include "IECore.h"
+#include "IECore/IECore.h"
+
 #include "IEMidiProfileManager.h"
 
 class IEMidiEditor
@@ -12,8 +13,5 @@ public:
 
 private:
     void DrawMidiDeviceInputPropertyEditor(IEMidiDeviceProperty& MidiDeviceProperty, bool& bDeleteRequested) const;
-    void DrawInitialOutputMessageEditor(std::vector<unsigned char>& MidiDeviceInitialOutputMidiMessage, bool& bDeleteRequested) const;
-
-private:
-    
+    void DrawInitialOutputMessageEditor(std::vector<unsigned char>& MidiDeviceInitialOutputMidiMessage, bool& bDeleteRequested) const;    
 };

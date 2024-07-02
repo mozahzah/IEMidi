@@ -2,14 +2,14 @@
 
 #pragma once
 
-#ifdef _WIN32
+#if defined (_WIN32)
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif
 #include <windows.h>
 #include <shlobj.h>
 #include <comdef.h> 
-#elif defined(__APPLE__)
+#elif defined (__APPLE__)
 #include <pwd.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -27,12 +27,14 @@
 #include <locale>
 #include <memory>
 #include <optional>
+#include <set>
 #include <source_location>
 #include <stack>
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 #include <thread>
+#include <unordered_set>
 #include <vector>
 
 /* Time analysers */

@@ -1,8 +1,8 @@
 // Copyright © 2024 mozahzah (Incus Entertainment). All rights reserved.
 
-#include "IERenderer.h"
+#include "IECore/IERenderer.h"
 
-#include "IEUtils.h"
+#include "IECore/IEUtils.h"
 
 void IERenderer::DrawTelemetry() const
 {

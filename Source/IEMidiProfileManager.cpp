@@ -5,7 +5,7 @@
 #include "ryml.hpp"
 #include "ryml_std.hpp"
 
-#include "IEUtils.h"
+#include "IECore/IEUtils.h"
 
 static constexpr char IEMIDI_PROFILES_FILENAME[] = "profiles.yaml";
 
@@ -36,6 +36,36 @@ IEMidiProfileManager::IEMidiProfileManager()
         }
         IELOG_SUCCESS("Using profiles settings file %s", ProfilesFilePathString.c_str());
     }
+}
+
+bool IEMidiProfileManager::HasProfile(const IEMidiDeviceProfile& MidiDeviceProfile) const
+{
+    bool bHasProfile = false;
+
+    const std::filesystem::path IEMidiConfigFolderPath = IEUtils::GetIEMidiConfigFolderPath();
+    if (!IEMidiConfigFolderPath.empty())
+    {
+        const std::filesystem::path ProfilesFilePath = IEMidiConfigFolderPath / IEMIDI_PROFILES_FILENAME;
+        if (std::filesystem::exists(ProfilesFilePath))
+        {
+            const std::string Content = ExtractFileContent(ProfilesFilePath);
+
+            ryml::Tree ProfilesTree;
+            ProfilesTree.reserve(INITIAL_TREE_NODE_COUNT);
+            ProfilesTree.reserve_arena(INITIAL_TREE_ARENA_CHAR_COUNT);
+            ryml::parse_in_arena(ryml::to_csubstr(Content), &ProfilesTree);
+
+            const ryml::ConstNodeRef Root = ProfilesTree.rootref();
+            if (Root.is_map())
+            {
+                if (Root.has_child(MidiDeviceProfile.Name.c_str()))
+                {
+                    bHasProfile = true;
+                }
+            }
+        }
+    }
+    return bHasProfile;
 }
 
 IEResult IEMidiProfileManager::SaveProfile(const IEMidiDeviceProfile& MidiDeviceProfile) const

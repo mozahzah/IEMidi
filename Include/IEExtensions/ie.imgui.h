@@ -5,7 +5,7 @@
 #include "imgui.h"
 #include "imgui_internal.h"
 
-#include "IECore.h"
+#include "IECore/IECore.h"
 
 namespace ImGui
 {

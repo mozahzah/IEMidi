@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "IECore.h"
+#include "IECore/IECore.h"
 
 namespace IEUtils
 {
