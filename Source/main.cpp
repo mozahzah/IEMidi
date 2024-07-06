@@ -7,7 +7,6 @@
 int main()
 {
     IEMidi IEMidiApp;
-
     IEMidiApp.SetAppState(IEAppState::Loading);
 
     IERenderer& Renderer = IEMidiApp.GetRenderer();
@@ -26,27 +25,14 @@ int main()
 
                 IEClock::time_point StartFrameTime = IEClock::now();
                 IEDurationMs CapturedDeltaTime = IEDurationMs::zero();
-                
-                while (Renderer.IsAppWindowOpen())
+
+                while (Renderer.IsAppRunning())
                 {
+                    Renderer.WaitEvents();
+                    Renderer.CheckAndResizeSwapChain();
+
                     StartFrameTime = IEClock::now();
 
-                    if (Renderer.IsAppWindowMinimized())
-                    {
-                        IEMidiApp.SetAppState(IEAppState::Background);
-                        IEMidiApp.ProcessMidi();
-                        continue;
-                    }
-                    else if (IEMidiApp.GetAppState() == IEAppState::Background)
-                    {
-                        IEMidiApp.SetAppState(IEAppState::MidiDeviceSelection);
-                        IEMidiApp.GetMidiIn().closePort();
-                        IEMidiApp.GetMidiOut().closePort();
-                        IEMidiApp.GetMidiIn().cancelCallback();
-                    }
-
-                    Renderer.PollEvents();
-                    Renderer.CheckAndResizeSwapChain();
                     Renderer.NewFrame();
                     ImGui::NewFrame();
 

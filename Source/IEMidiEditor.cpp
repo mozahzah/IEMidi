@@ -13,17 +13,17 @@ static constexpr float InputBoxSizeWidth = 150.0f;
 
 void IEMidiEditor::DrawMidiDeviceProfileEditor(IEMidiDeviceProfile& MidiDeviceProfile) const
 {
-    static const ImVec2 PlusButtonSize = ImVec2(ImGui::GetFontSize() * 2.0f, ImGui::GetFontSize() * 2.0f);
-    
+    const ImVec2 PlusButtonSize = ImVec2(ImGui::GetFontSize() * 2.0f, ImGui::GetFontSize() * 2.0f);
+
     if (ImGui::BeginTable("Profile Midi Input Editor", 1))
     {
         for (std::vector<IEMidiDeviceProperty>::iterator It = MidiDeviceProfile.Properties.begin();
             It != MidiDeviceProfile.Properties.end();)
         {
-            ImGui::PushID(It.base());
+            ImGui::PushID(&*It);
             ImGui::TableNextColumn();
             bool bDeleteRequested = false;
-            DrawMidiDeviceInputPropertyEditor(*It, bDeleteRequested);
+            DrawMidiDevicePropertyEditor(*It, bDeleteRequested);
             It = bDeleteRequested ? MidiDeviceProfile.Properties.erase(It) : It+1;
             ImGui::PopID();
         }
@@ -32,7 +32,7 @@ void IEMidiEditor::DrawMidiDeviceProfileEditor(IEMidiDeviceProfile& MidiDevicePr
         ImGui::TableNextColumn();
         if (ImGui::Button("+", PlusButtonSize))
         {
-            MidiDeviceProfile.Properties.push_back(IEMidiDeviceProperty());
+            MidiDeviceProfile.Properties.push_back(IEMidiDeviceProperty(MidiDeviceProfile.Name));
         }
 
         ImGui::EndTable();
@@ -43,7 +43,7 @@ void IEMidiEditor::DrawMidiDeviceProfileEditor(IEMidiDeviceProfile& MidiDevicePr
         for (std::vector<std::vector<unsigned char>>::iterator It = MidiDeviceProfile.InitialOutputMidiMessages.begin();
             It != MidiDeviceProfile.InitialOutputMidiMessages.end();)
         {
-            ImGui::PushID(It.base());
+            ImGui::PushID(&*It);
             ImGui::TableNextColumn();
             bool bDeleteRequested = false;
             DrawInitialOutputMessageEditor(*It, bDeleteRequested);
@@ -62,7 +62,7 @@ void IEMidiEditor::DrawMidiDeviceProfileEditor(IEMidiDeviceProfile& MidiDevicePr
     }
 }
 
-void IEMidiEditor::DrawMidiDeviceInputPropertyEditor(IEMidiDeviceProperty& MidiDeviceProperty, bool& bDeleteRequested) const
+void IEMidiEditor::DrawMidiDevicePropertyEditor(IEMidiDeviceProperty& MidiDeviceProperty, bool& bDeleteRequested) const
 {
     if (ImGui::BeginTable("Midi Property Editor", MidiDevicePropertyEditorColumnCount, ImGuiTableFlags_Hideable | ImGuiTableFlags_SizingFixedFit))
     {
@@ -84,31 +84,37 @@ void IEMidiEditor::DrawMidiDeviceInputPropertyEditor(IEMidiDeviceProperty& MidiD
 
             ImGui::EndCombo();
         }
-        
-        static const char ParameterTypesStringArray[static_cast<int>(IEMidiParameterType::Count)][std::size("-Select Parameter Type")] =
-        {   "-Select Parameter Type",
+
+        if (MidiDeviceProperty.MidiMessageType == IEMidiMessageType::NoteOnOff)
+        {
+            ImGui::SameLine();
+            ImGui::Checkbox("Toggle", &MidiDeviceProperty.bToggle);
+        }
+
+        static const char ActionTypesStringArray[static_cast<int>(IEMidiActionType::Count)][std::size("-Select Action Type")] =
+        {   "-Select Action Type",
             "Volume",
             "Mute",
             "Console Command",
             "Open File" };
         ImGui::TableNextColumn();
-        ImGui::SetNextItemWidth(ImGui::CalcTextSize("-Select Parameter Type").x * 1.3f);
-        if (ImGui::BeginCombo("##2", ParameterTypesStringArray[static_cast<int>(MidiDeviceProperty.MidiParameterType)]))
+        ImGui::SetNextItemWidth(ImGui::CalcTextSize("-Select Action Type").x * 1.3f);
+        if (ImGui::BeginCombo("##2", ActionTypesStringArray[static_cast<int>(MidiDeviceProperty.MidiActionType)]))
         {
-            for (int i = 0; i < std::size(ParameterTypesStringArray); i++)
+            for (int i = 0; i < std::size(ActionTypesStringArray); i++)
             {
-                if (ImGui::Selectable(ParameterTypesStringArray[i]))
+                if (ImGui::Selectable(ActionTypesStringArray[i]))
                 {
-                    MidiDeviceProperty.MidiParameterType = static_cast<IEMidiParameterType>(i);
+                    MidiDeviceProperty.MidiActionType = static_cast<IEMidiActionType>(i);
                 }
             }
 
             ImGui::EndCombo();
         }
 
-        switch (MidiDeviceProperty.MidiParameterType)
+        switch (MidiDeviceProperty.MidiActionType)
         {
-            case IEMidiParameterType::ConsoleCommand:
+            case IEMidiActionType::ConsoleCommand:
             {
                 ImGui::TableNextColumn();
                 ImGui::TableSetColumnEnabled(-1, true);
@@ -123,8 +129,10 @@ void IEMidiEditor::DrawMidiDeviceInputPropertyEditor(IEMidiDeviceProperty& MidiD
                 MidiDeviceProperty.OpenFilePath.clear();
                 break;
             }
-            case IEMidiParameterType::OpenFile:
+            case IEMidiActionType::OpenFile:
             {
+                MidiDeviceProperty.MidiMessageType = IEMidiMessageType::NoteOnOff;
+
                 ImGui::TableNextColumn();
                 ImGui::TableSetColumnEnabled(-1, false);
                 MidiDeviceProperty.ConsoleCommand.clear();
@@ -157,7 +165,17 @@ void IEMidiEditor::DrawMidiDeviceInputPropertyEditor(IEMidiDeviceProperty& MidiD
         ImGui::TableNextColumn();
         ImGui::GetWindowDrawList()->ChannelsSplit(2);
         ImGui::GetWindowDrawList()->ChannelsSetCurrent(1);
-        ImGui::Selectable("Record Midi", &MidiDeviceProperty.bIsRecording);
+        if (m_MidiDeviceProcessor)
+        {
+            if (ImGui::Selectable("Record Midi", m_MidiDeviceProcessor->IsMidiDevicePropertyActive(MidiDeviceProperty)))
+            {
+                m_MidiDeviceProcessor->ActivateMidiDeviceProperty(MidiDeviceProperty);
+            }
+        }
+        else
+        {
+            ImGui::Text("Recording not available");
+        }
         ImGui::GetWindowDrawList()->ChannelsSetCurrent(0);
         ImGui::GetWindowDrawList()->AddRectFilled(ImGui::GetItemRectMin(), ImGui::GetItemRectMax(), IM_COL32(255, 0, 0, 128));
         ImGui::GetWindowDrawList()->ChannelsMerge();

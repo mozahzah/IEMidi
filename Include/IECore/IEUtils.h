@@ -41,6 +41,20 @@ namespace IEUtils
         }
     };
 
+    template<>
+    struct StringCastImpl<wchar_t, char>
+    {
+        static std::wstring Cast(const char* String)
+        {
+            std::mbstate_t State = std::mbstate_t();
+            size_t Size = std::mbsrtowcs(nullptr, &String, 0, &State);
+            std::vector<wchar_t> Buffer(Size + 1);
+            std::mbsrtowcs(Buffer.data(), &String, Size, &State);
+            Buffer[Size] = L'\0';
+            return std::wstring(Buffer.data());
+        }
+    };
+
     template<typename ToCharType, typename FromCharType>
     std::basic_string<ToCharType> StringCast(const FromCharType* String) 
     {

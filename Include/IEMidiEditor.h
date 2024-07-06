@@ -4,14 +4,24 @@
 
 #include "IECore/IECore.h"
 
-#include "IEMidiProfileManager.h"
+#include "IEMidiTypes.h"
+#include "IEMidiProcessor.h"
 
 class IEMidiEditor
 {
 public:
+    IEMidiEditor() = delete;
+    IEMidiEditor(const std::shared_ptr<IEMidiProcessor>& MidiDeviceProcessor) :
+        m_MidiDeviceProcessor(MidiDeviceProcessor)
+    {}
+
+public:
     void DrawMidiDeviceProfileEditor(IEMidiDeviceProfile& MidiDeviceProfile) const;
 
 private:
-    void DrawMidiDeviceInputPropertyEditor(IEMidiDeviceProperty& MidiDeviceProperty, bool& bDeleteRequested) const;
-    void DrawInitialOutputMessageEditor(std::vector<unsigned char>& MidiDeviceInitialOutputMidiMessage, bool& bDeleteRequested) const;    
+    void DrawMidiDevicePropertyEditor(IEMidiDeviceProperty& MidiDeviceProperty, bool& bDeleteRequested) const;
+    void DrawInitialOutputMessageEditor(std::vector<unsigned char>& MidiDeviceInitialOutputMidiMessage, bool& bDeleteRequested) const;
+
+private:
+    std::shared_ptr<IEMidiProcessor> m_MidiDeviceProcessor;
 };

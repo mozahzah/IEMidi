@@ -15,6 +15,7 @@
 #include <sys/types.h>
 #endif
 
+#include <array>
 #include <cassert>
 #include <charconv>
 #include <chrono>
@@ -24,6 +25,7 @@
 #include <cwchar>
 #include <filesystem>
 #include <format>
+#include <functional>
 #include <locale>
 #include <memory>
 #include <optional>
@@ -35,6 +37,7 @@
 #include <string.h>
 #include <thread>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
 /* Time analysers */

@@ -62,7 +62,7 @@ namespace IEUtils
 
     std::filesystem::path GetIEMidiConfigFolderPath()
     {
-        static constexpr char IEMidiConfigFolderName[] = ".IEMidi";
+        static constexpr char IEMidiConfigFolderName[] = "IEMidi";
 #ifdef _WIN32
         PWSTR AppDataFolderPath = NULL;
         const HRESULT Result = SHGetKnownFolderPath(FOLDERID_RoamingAppData, 0, NULL, &AppDataFolderPath);
@@ -74,7 +74,6 @@ namespace IEUtils
             const std::filesystem::path IEMidiConfigFolderPath = std::filesystem::path(StrAppDataFolderPath) / IEMidiConfigFolderName;
             if (std::filesystem::exists(IEMidiConfigFolderPath) || std::filesystem::create_directory(IEMidiConfigFolderPath))
             {
-                SetFileAttributes(IEMidiConfigFolderPath.string().c_str(), FILE_ATTRIBUTE_HIDDEN);
                 return IEMidiConfigFolderPath;
             }
         }
@@ -98,20 +97,20 @@ namespace IEUtils
 
     bool IsFileHidden(const std::filesystem::path& Path)
     {
-        bool bIsHidden = true;
+        bool bIsHidden = false;
         if (std::filesystem::exists(Path))
         {
 #ifdef _WIN32
             const DWORD Attributes = GetFileAttributes(Path.string().c_str());
-            if (Attributes & FILE_ATTRIBUTE_HIDDEN == 0)
+            if ((Attributes & FILE_ATTRIBUTE_HIDDEN) != 0)
             {
-                bIsHidden = false;
+                bIsHidden = true;
             }
 #elif defined(__APPLE__)
             const std::string FileName = Path.filename().string();
-            if (!FileName.empty() && FileName[0] != '.')
+            if (!FileName.empty() && FileName[0] == '.')
             {
-                bIsHidden = false;
+                bIsHidden = true;
             }
 #endif
         }

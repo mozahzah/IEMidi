@@ -16,23 +16,34 @@ namespace Private
         const char* LevelString = nullptr;
         switch (LogLevel)
         {
-        case -1:
-            ColorCode = ColorSpecifierRed;
-            LevelString = "Error";
-            break;
-        case 0:
-            ColorCode = ColorSpecifierReset;
-            LevelString = "Log";
-            break;
-        case 1:
-            ColorCode = ColorSpecifierGreen;
-            LevelString = "Success";
-            break;
-        case 2:
-            ColorCode = ColorSpecifierYellow;
-            LevelString = "Warning";
-        default:
-            break;
+            case -1:
+            {
+                ColorCode = ColorSpecifierRed;
+                LevelString = "Error";
+                break;
+            } 
+            case 0:
+            {
+               ColorCode = ColorSpecifierReset;
+                LevelString = "Log";
+                break; 
+            }
+            case 1:
+            {
+              ColorCode = ColorSpecifierGreen;
+                LevelString = "Success";
+                break;  
+            }
+            case 2:
+            {
+                ColorCode = ColorSpecifierYellow;
+                LevelString = "Warning";
+                break;
+            }
+            default:
+            {
+                break;
+            }
         };
         std::printf("%sIELog %s: ", ColorCode, LevelString);
         va_list Args;

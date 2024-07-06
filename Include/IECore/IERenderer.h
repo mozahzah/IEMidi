@@ -6,8 +6,12 @@
 #if defined(_MSC_VER) && (_MSC_VER >= 1900) && !defined(IMGUI_DISABLE_WIN32_FUNCTIONS)
 #pragma comment(lib, "legacy_stdio_definitions")
 #endif
+#if defined (_WIN32)
+#define GLFW_EXPOSE_NATIVE_WIN32 1
+#endif
 
 #include "GLFW/glfw3.h"
+#include "GLFW/glfw3native.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_vulkan.h"
 
@@ -19,22 +23,52 @@ public:
     virtual ~IERenderer() = default;
 
 public:
-    virtual IEResult Initialize() { return IEResult(IEResult::Type::Unimplemented, "Unimplemented."); }
-    virtual IEResult PostImGuiContextCreated() { return IEResult(IEResult::Type::Unimplemented, "Unimplemented."); }
-    virtual void Deinitialize() {}
-    virtual int32_t FlushGPUCommandsAndWait() { return -1; }
-    
-    virtual bool IsAppWindowOpen() const { return false; }
-    virtual bool IsAppWindowMinimized() const { return true; }
-    virtual void PollEvents() const {}
-    virtual void CheckAndResizeSwapChain() {}
-
-    virtual void NewFrame() {}
-    virtual void RenderFrame(ImDrawData& DrawData) {}
-    virtual void PresentFrame() {}
+#if defined (_WIN32)
+    static LRESULT WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+#endif
 
 public:
-    virtual void DrawTelemetry() const;
+    virtual IEResult Initialize() = 0;
+    virtual IEResult PostImGuiContextCreated() = 0;
+    virtual void Deinitialize() = 0;
+    virtual int32_t FlushGPUCommandsAndWait() = 0;
+    
+    virtual void CheckAndResizeSwapChain() = 0;
+    virtual void NewFrame() = 0;
+    virtual void RenderFrame(ImDrawData& DrawData) = 0;
+    virtual void PresentFrame() = 0;
+
+public:
+    void PostWindowCreated();
+    bool IsAppRunning() const;
+    bool IsAppWindowOpen() const;
+    bool IsAppWindowMinimized() const;
+    void WaitEvents() const;
+    void PollEvents() const;
+
+public:
+    void AddOnWindowCloseCallbackFunc(const std::function<void(uint32_t, void*)>& Func, void* UserData);
+    void AddOnWindowRestoreCallbackFunc(const std::function<void(uint32_t WindowID, void* UserData)>& Func, void* UserData);
+
+public:
+    void DrawTelemetry() const;
+
+protected:
+    GLFWwindow* m_AppWindow = nullptr;
+    int32_t m_DefaultAppWindowWidth = 1280;
+    int32_t m_DefaultAppWindowHeight = 720;
+
+private:
+    std::vector<std::pair<void*, std::function<void(uint32_t, void*)>>> m_OnWindowCloseCallbackFunc;
+    std::vector<std::pair<void*, std::function<void(uint32_t, void*)>>> m_OnWindowRestoreCallbackFunc;
+
+private:
+    bool m_ExitRequested = false;
+    
+#if defined (_WIN32)
+    static WNDPROC m_GlfwWndProc;
+    static HMENU m_PopupWndTrayIconMenu;
+#endif
 };
 
 class IERenderer_Vulkan : public IERenderer
@@ -46,11 +80,7 @@ public:
     void Deinitialize() override;
     int32_t FlushGPUCommandsAndWait() override;
     
-    bool IsAppWindowOpen() const override;
-    bool IsAppWindowMinimized() const override;
-    void PollEvents() const override;
     void CheckAndResizeSwapChain() override;
-
     void NewFrame() override;
     void RenderFrame(ImDrawData& DrawData) override;
     void PresentFrame() override;
@@ -66,10 +96,7 @@ private:
     void DinitializeVulkan();
 
 private:
-    GLFWwindow* m_AppWindow = nullptr;
     ImGui_ImplVulkanH_Window m_AppWindowVulkanData = {};
-    int32_t m_DefaultAppWindowWidth = 1280;
-    int32_t m_DefaultAppWindowHeight = 720;
 
     VkAllocationCallbacks* m_VkAllocationCallback = nullptr;
     VkInstance m_VkInstance = nullptr;

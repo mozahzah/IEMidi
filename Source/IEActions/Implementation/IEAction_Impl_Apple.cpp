@@ -1,27 +1,14 @@
 // Copyright © 2024 mozahzah (Incus Entertainment). All rights reserved.
 
-#include "IEMidiParameter.h"
+#include "IEActions/Implementation/IEAction_Impl_Apple.h"
 
-namespace IEMidiParameter
-{
-    std::unique_ptr<IEParameter_Volume> GetVolumeParameter()
-    {
-#if defined (_WIN32)
-        return std::make_unique<IEWinParameter_Volume>();
-#elif defined (__APPLE__)
-        return std::make_unique<IEAppleParameter_Volume>();
-#else
-        IEAssert(false);
-#endif
-    }
-}
-
-IEAppleParameter_Volume::IEAppleParameter_Volume()
+#if defined (__APPLE__)
+IEAction_Volume_Impl_Apple::IEAction_Volume_Impl_Apple()
 {
     m_AudioDeviceID = GetAudioDeviceID();
 }
 
-float IEAppleParameter_Volume::GetVolume() const
+float IEAction_Volume_Impl_Apple::GetVolume() const
 {
     float Volume;
     UInt32 PropertySize = sizeof(float);
@@ -36,7 +23,7 @@ float IEAppleParameter_Volume::GetVolume() const
     return Volume;
 }
 
-void IEAppleParameter_Volume::SetVolume(float Volume)
+void IEAction_Volume_Impl_Apple::SetVolume(float Volume)
 {
     uint32_t PropertySize = sizeof(float);
     const AudioObjectPropertyAddress PropertyAddress =
@@ -50,7 +37,7 @@ void IEAppleParameter_Volume::SetVolume(float Volume)
     AudioObjectSetPropertyData(m_AudioDeviceID, &PropertyAddress, 0, NULL, PropertySize, &FinalVolume);
 }
 
-void IEAppleParameter_Volume::RegisterVolumeChangeCallback(const std::function<void(float)>& Callback)
+void IEAction_Volume_Impl_Apple::RegisterVolumeChangeCallback(const std::function<void(float)>& Callback)
 {
     const AudioObjectPropertyAddress PropertyAddress =
     {
@@ -59,11 +46,11 @@ void IEAppleParameter_Volume::RegisterVolumeChangeCallback(const std::function<v
         kAudioObjectPropertyElementMain
     };
     
-    AudioObjectAddPropertyListener(m_AudioDeviceID, &PropertyAddress, &IEAppleParameter_Volume::VolumeChangeCallback, this);
+    AudioObjectAddPropertyListener(m_AudioDeviceID, &PropertyAddress, &IEAction_Volume_Impl_Apple::VolumeChangeCallback, this);
     m_OnVolumeChangeCallback = Callback;
 }
 
-AudioDeviceID IEAppleParameter_Volume::GetAudioDeviceID()
+AudioDeviceID IEAction_Volume_Impl_Apple::GetAudioDeviceID()
 {
     AudioDeviceID OutputDeviceID;
     uint32_t PropertySize = sizeof(AudioDeviceID);
@@ -78,16 +65,17 @@ AudioDeviceID IEAppleParameter_Volume::GetAudioDeviceID()
     return OutputDeviceID;
 }
 
-OSStatus IEAppleParameter_Volume::VolumeChangeCallback(AudioObjectID ObjectID, uint32_t NumberAddresses, const AudioObjectPropertyAddress* PropertyAddresses, void* UserData)
+OSStatus IEAction_Volume_Impl_Apple::VolumeChangeCallback(AudioObjectID ObjectID, uint32_t NumberAddresses, const AudioObjectPropertyAddress* PropertyAddresses, void* UserData)
 {
     OSStatus Status;
-    if (IEAppleParameter_Volume* const AppleVolumeParameter = static_cast<IEAppleParameter_Volume*>(UserData))
+    if (IEAction_Volume_Impl_Apple* const AppleVolumeAction = static_cast<IEAction_Volume_Impl_Apple*>(UserData))
     {
-        if (AppleVolumeParameter->m_OnVolumeChangeCallback)
+        if (AppleVolumeAction->m_OnVolumeChangeCallback)
         {
-            AppleVolumeParameter->m_OnVolumeChangeCallback(AppleVolumeParameter->GetVolume());
+            AppleVolumeAction->m_OnVolumeChangeCallback(AppleVolumeAction->GetVolume());
         }
         Status = noErr;
     }
     return Status;
 }
+#endif

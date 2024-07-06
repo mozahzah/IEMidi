@@ -2,7 +2,135 @@
 
 #include "IECore/IERenderer.h"
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
 #include "IECore/IEUtils.h"
+
+#if defined (_WIN32)
+
+#define WM_TRAYICON (WM_USER + 1)
+#define ID_TRAY_EXIT 1001
+
+WNDPROC IERenderer::m_GlfwWndProc = WNDPROC();
+HMENU IERenderer::m_PopupWndTrayIconMenu = HMENU();
+
+LRESULT IERenderer::WndProc(HWND Window, UINT MessageID, WPARAM WordParam, LPARAM LongParam)
+{
+    IEAssert(m_GlfwWndProc);
+    if (IERenderer* const Renderer = reinterpret_cast<IERenderer*>(GetWindowLongPtr(Window, GWLP_USERDATA)))
+    {
+        switch (MessageID)
+        {
+            case WM_TRAYICON:
+            {
+                switch (LOWORD(LongParam))
+                {
+                    case WM_RBUTTONDOWN:
+                    {
+                        POINT CursorPos;
+                        GetCursorPos(&CursorPos);
+
+                        m_PopupWndTrayIconMenu = CreatePopupMenu();
+                        AppendMenu(m_PopupWndTrayIconMenu, MF_STRING, ID_TRAY_EXIT, "Exit");
+
+                        SetForegroundWindow(Window);
+                        TrackPopupMenu(m_PopupWndTrayIconMenu, TPM_LEFTALIGN | TPM_BOTTOMALIGN | TPM_RIGHTBUTTON, CursorPos.x, CursorPos.y, 0, Window, NULL);
+                        DestroyMenu(m_PopupWndTrayIconMenu);
+
+                        break;
+                    }
+                    case WM_LBUTTONDOWN:
+                    {
+                        for (const std::pair<void*, const std::function<void(uint32_t WindowID, void* UserData)>>& Element : Renderer->m_OnWindowRestoreCallbackFunc)
+                        {
+                            Element.second(0, Element.first);
+                        }
+
+                        glfwSetWindowShouldClose(Renderer->m_AppWindow, GLFW_FALSE);
+                        glfwRestoreWindow(Renderer->m_AppWindow);
+                        
+                        break;
+                    }
+                }
+
+                break;
+            }
+            case WM_CLOSE:
+            {
+                glfwSetWindowShouldClose(Renderer->m_AppWindow, GLFW_TRUE);
+                glfwHideWindow(Renderer->m_AppWindow);
+                
+                for (const std::pair<void*, const std::function<void(uint32_t WindowID, void* UserData)>>& Element : Renderer->m_OnWindowCloseCallbackFunc)
+                {
+                    Element.second(0, Element.first);
+                }
+
+                break;
+            }
+            case WM_COMMAND:
+            {
+                if (LOWORD(WordParam) == ID_TRAY_EXIT)
+                {
+                    Renderer->m_ExitRequested = true;
+                }
+                break;
+            }
+        }
+    }
+    return CallWindowProc(m_GlfwWndProc, Window, MessageID, WordParam, LongParam);
+}
+#elif defined (__APPLE__)
+    // TODO
+#endif
+
+bool IERenderer::IsAppRunning() const
+{
+    return !m_ExitRequested;
+}
+
+bool IERenderer::IsAppWindowOpen() const
+{
+    bool bIsAppWindowOpen = false;
+    if (m_AppWindow)
+    {
+        bIsAppWindowOpen = !glfwWindowShouldClose(m_AppWindow);
+    }
+    return bIsAppWindowOpen;
+}
+
+bool IERenderer::IsAppWindowMinimized() const
+{
+    bool bIsAppWindowMinimized = false;
+    if (m_AppWindow)
+    {
+        if (glfwGetWindowAttrib(m_AppWindow, GLFW_ICONIFIED))
+        {
+            bIsAppWindowMinimized = true;
+        }
+    }
+    return bIsAppWindowMinimized;
+}
+
+void IERenderer::WaitEvents() const
+{
+    glfwWaitEvents();
+}
+
+void IERenderer::PollEvents() const
+{
+    glfwPollEvents();
+}
+
+void IERenderer::AddOnWindowCloseCallbackFunc(const std::function<void(uint32_t, void*)>& Func, void* UserData)
+{
+    m_OnWindowCloseCallbackFunc.emplace_back(std::make_pair(UserData, Func));
+}
+
+void IERenderer::AddOnWindowRestoreCallbackFunc(const std::function<void(uint32_t WindowID, void* UserData)>& Func, void* UserData)
+{
+    m_OnWindowRestoreCallbackFunc.emplace_back(std::make_pair(UserData, Func));
+}
 
 void IERenderer::DrawTelemetry() const
 {
@@ -22,6 +150,43 @@ void IERenderer::DrawTelemetry() const
     ImGui::End();
 }
 
+void IERenderer::PostWindowCreated()
+{
+    /* Setup Window Icon */
+    int IconWidth, IconHeight, IconChannels;
+    const std::filesystem::path AppDirectory = IEUtils::FindFolderPathUpwards(std::filesystem::current_path(), "IEMidi");
+    const std::filesystem::path IELogoPath = AppDirectory / "Resources/Logos/IE.png";
+    if (unsigned char* const IconPixelData = stbi_load(IELogoPath.string().c_str(), &IconWidth, &IconHeight, &IconChannels, 4))
+    {
+        GLFWimage IconImage;
+        IconImage.width = IconWidth;
+        IconImage.height = IconHeight;
+        IconImage.pixels = IconPixelData;
+        glfwSetWindowIcon(m_AppWindow, 1, &IconImage);
+    }
+
+#if defined (_WIN32)
+    /* Setup  System Tray Icon */
+    const HWND Win32Window = glfwGetWin32Window(m_AppWindow);
+    
+    NOTIFYICONDATA NotifyIconData;
+    NotifyIconData.cbSize = sizeof(NOTIFYICONDATA);
+    NotifyIconData.hWnd = Win32Window;
+    NotifyIconData.uID = 1;
+    NotifyIconData.uVersion = NOTIFYICON_VERSION_4;
+    NotifyIconData.uFlags = NIF_ICON | NIF_TIP | NIF_GUID | NIF_MESSAGE;
+    NotifyIconData.uCallbackMessage = WM_TRAYICON;
+    NotifyIconData.hIcon = reinterpret_cast<HICON>(SendMessage(Win32Window, WM_GETICON, ICON_SMALL, 0));
+    Shell_NotifyIcon(NIM_ADD, &NotifyIconData);
+
+    m_GlfwWndProc = (WNDPROC)GetWindowLongPtr(Win32Window, GWLP_WNDPROC);
+    SetWindowLongPtr(Win32Window, GWLP_WNDPROC, (LONG_PTR)IERenderer::WndProc);
+    SetWindowLongPtr(Win32Window, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
+#elif defined (__APPLE__)
+    // TODO
+#endif
+}
+
 IEResult IERenderer_Vulkan::Initialize()
 {
     IEResult Result(IEResult::Type::Fail, "Failed to initialize IERenderer");
@@ -33,6 +198,7 @@ IEResult IERenderer_Vulkan::Initialize()
         m_AppWindow = glfwCreateWindow(m_DefaultAppWindowWidth, m_DefaultAppWindowHeight, "IEMidi", nullptr, nullptr);
         if (m_AppWindow)
         {
+            PostWindowCreated();
             uint32_t RequiredInstanceExtensionCount = 0;
             if (const char** GlfwExtensions = glfwGetRequiredInstanceExtensions(&RequiredInstanceExtensionCount))
             {
@@ -134,34 +300,6 @@ int32_t IERenderer_Vulkan::FlushGPUCommandsAndWait()
     return vkDeviceWaitIdle(m_VkDevice);
 }
 
-bool IERenderer_Vulkan::IsAppWindowOpen() const
-{
-    bool bIsAppWindowOpen = false;
-    if (m_AppWindow)
-    {
-        bIsAppWindowOpen = !glfwWindowShouldClose(m_AppWindow);
-    }
-    return bIsAppWindowOpen;
-}
-
-bool IERenderer_Vulkan::IsAppWindowMinimized() const
-{
-    bool bIsAppWindowMinimized = false;
-    if (m_AppWindow)
-    {
-        if (glfwGetWindowAttrib(m_AppWindow, GLFW_ICONIFIED))
-        {
-            bIsAppWindowMinimized = true;
-        }
-    }
-    return bIsAppWindowMinimized;
-}
-
-void IERenderer_Vulkan::PollEvents() const
-{
-    glfwPollEvents();
-}
-
 void IERenderer_Vulkan::CheckAndResizeSwapChain()
 {
     int FrameBufferWidth = 0, FrameBufferHeight = 0;
@@ -193,10 +331,10 @@ void IERenderer_Vulkan::RenderFrame(ImDrawData& DrawData)
     const bool bIsMinimized = (DrawData.DisplaySize.x <= 0.0f || DrawData.DisplaySize.y <= 0.0f);
     if (!bIsMinimized)
     {
-        m_AppWindowVulkanData.ClearValue.color.float32[0] = 0;
-        m_AppWindowVulkanData.ClearValue.color.float32[1] = 0;
-        m_AppWindowVulkanData.ClearValue.color.float32[2] = 0;
-        m_AppWindowVulkanData.ClearValue.color.float32[3] = 0;
+        m_AppWindowVulkanData.ClearValue.color.float32[0] = 0.0f;
+        m_AppWindowVulkanData.ClearValue.color.float32[1] = 0.0f;
+        m_AppWindowVulkanData.ClearValue.color.float32[2] = 0.0f;
+        m_AppWindowVulkanData.ClearValue.color.float32[3] = 1.0f;
 
         VkSemaphore ImageAcquiredSemaphore = m_AppWindowVulkanData.FrameSemaphores[m_AppWindowVulkanData.SemaphoreIndex].ImageAcquiredSemaphore;
         VkSemaphore RenderCompleteSemaphore = m_AppWindowVulkanData.FrameSemaphores[m_AppWindowVulkanData.SemaphoreIndex].RenderCompleteSemaphore;

@@ -19,11 +19,11 @@ namespace ImGui
         ImGui::LoadIniSettingsFromDisk(ImGuiIniFilePathString.c_str());
         IO.IniFilename = ImGuiIniFilePathString.c_str();
 
-        const std::filesystem::path RobotoMonoFontPath = AppDirectory / "Resources/Fonts/Roboto_Mono/static/RobotoMono-Medium.ttf";
+        const std::filesystem::path RobotoMonoFontPath = AppDirectory / "Resources/Fonts/Roboto_Mono/static/RobotoMono-Thin.ttf";
         if (ImFont* const RobotoMonoFont = IO.Fonts->AddFontFromFileTTF(IEUtils::StringCast<char>(RobotoMonoFontPath.c_str()).c_str(), 30.0f))
         {
             IO.Fonts->Build();
-            IO.FontGlobalScale = 0.5f;
+            IO.FontGlobalScale = 0.7f;
             IELOG_SUCCESS("Successfully loaded font (%s)", RobotoMonoFont->GetDebugName());
         }
 
@@ -39,12 +39,12 @@ namespace ImGui
             Style->GrabMinSize = 10.0f;
 
             /* Borders */
-            Style->WindowBorderSize = 1.0f;
-            Style->ChildBorderSize = 1.0f;
+            Style->WindowBorderSize = 0.0f;
+            Style->ChildBorderSize = 0.0f;
             Style->PopupBorderSize = 1.0f;
             Style->FrameBorderSize = 0.0f;
             Style->TabBorderSize = 0.0f;
-            Style->TabBarBorderSize = 1.0f;
+            Style->TabBarBorderSize = 0.0f;
 
             /* Rounding */
             Style->WindowRounding = 1.0f;
@@ -74,9 +74,9 @@ namespace ImGui
             {
                 Colors[ImGuiCol_Text] = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
                 Colors[ImGuiCol_TextDisabled] = ImVec4(0.50f, 0.50f, 0.50f, 1.00f);
-                Colors[ImGuiCol_WindowBg] = ImVec4(0.00f, 0.00f, 0.00f, 1.00f);
-                Colors[ImGuiCol_ChildBg] = ImVec4(0.00f, 0.00f, 0.00f, 0.71f);
-                Colors[ImGuiCol_PopupBg] = ImVec4(0.00f, 0.00f, 0.00f, 0.71f);
+                Colors[ImGuiCol_WindowBg] = ImVec4(0.1255f, 0.1255f, 0.1255f, 1.0f);
+                Colors[ImGuiCol_ChildBg] = ImVec4(0.1255f, 0.1255f, 0.1255f, 1.0f);
+                Colors[ImGuiCol_PopupBg] = ImVec4(0.1255f, 0.1255f, 0.1255f, 1.0f);
                 Colors[ImGuiCol_Border] = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
                 Colors[ImGuiCol_BorderShadow] = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
                 Colors[ImGuiCol_FrameBg] = ImVec4(0.13f, 0.13f, 0.13f, 0.73f);
@@ -147,11 +147,9 @@ namespace ImGui
                         return;
                     }
 
-                    for (std::filesystem::directory_iterator It = std::filesystem::directory_iterator(CurrentPath);
-                        It != std::filesystem::directory_iterator(); It++)
+                    for (const std::filesystem::directory_entry& Entry : std::filesystem::directory_iterator(CurrentPath))
                     {
-                        const std::filesystem::path& SubPath = *It;
-
+                        const std::filesystem::path& SubPath = Entry.path();
                         if (!IEUtils::IsFileHidden(SubPath))
                         {
                             if (std::filesystem::is_directory(SubPath))
