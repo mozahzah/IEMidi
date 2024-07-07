@@ -104,9 +104,13 @@ void IERenderer::PostWindowCreated()
     SetWindowLongPtr(Win32Window, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
 #elif defined (__APPLE__)
     InitializeIEAppleApp(this);
+    glfwSetWindowUserPointer(m_AppWindow, this);
     glfwSetWindowCloseCallback(m_AppWindow, [](GLFWwindow* Window)
         {
-            glfwHideWindow(Window);
+            if (IERenderer* const Renderer = reinterpret_cast<IERenderer*>(glfwGetWindowUserPointer(Window)))
+            {
+                Renderer->CloseAppWindow();
+            }
         });
 #endif
 }

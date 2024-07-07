@@ -16,10 +16,6 @@
     if (self) 
     {
         self.Renderer = Renderer;
-        [[NSNotificationCenter defaultCenter]   addObserver:self
-                                                selector:@selector(OnWindowOcclusionStateChanged:)
-                                                name:NSWindowDidChangeOcclusionStateNotification
-                                                object:nil];
     }    
     return self;
 }
@@ -72,22 +68,6 @@
             [MenuItem addItem:quitMenuItem];
 
             [self.StatusItem setMenu:MenuItem];
-        }
-    }
-}
-
-- (void)OnWindowOcclusionStateChanged:(NSNotification *)notification 
-{
-    NSWindow *closedWindow = notification.object;
-    NSString *windowTitle = closedWindow.title;
-    if ([windowTitle isEqualToString:@"IEMidi"])
-    {
-        if (![closedWindow isVisible]) 
-        {
-            if (self.Renderer) 
-            {
-                self.Renderer->CloseAppWindow();
-            }
         }
     }
 }
