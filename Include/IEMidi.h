@@ -54,7 +54,7 @@ private:
     static void OnRtMidiErrorCallback(RtMidiError::Type RtMidiErrorType, const std::string& ErrorText, void* UserData);
 
 private:
-    std::unique_ptr<IERenderer> m_Renderer;
+    std::shared_ptr<IERenderer> m_Renderer;
     std::unique_ptr<RtMidiIn> m_MidiIn;
     std::unique_ptr<RtMidiOut> m_MidiOut;
 

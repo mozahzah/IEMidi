@@ -33,6 +33,7 @@ if(CMAKE_SYSTEM_NAME MATCHES "Windows")
 elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
   set(CMAKE_OSX_SYSROOT /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk)
   find_library(COREAUDIO_LIBRARY CoreAudio)
+  set_source_files_properties(IERenderer.mm PROPERTIES LANGUAGE CXX)
 endif()
 
 # Add additional subdirectories
@@ -71,12 +72,28 @@ include_directories("${STB_DIR}")
 # Add executable and link libraries
 begin_section_message("Adding executable and finalizing library linking")
 file(GLOB_RECURSE SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/Source/*.cpp")
+
+if(CMAKE_SYSTEM_NAME MATCHES "Windows")
+  # Specific windows source files can be appended here
+elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
+  message("Adding additional source files for ${CMAKE_SYSTEM_NAME}")
+  file(GLOB_RECURSE ADD_SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/Source/*.mm")
+  list(APPEND SOURCE_FILES ${ADD_SOURCE_FILES})
+endif()
+
 add_library(LIEMidi STATIC ${SOURCE_FILES})
 target_include_directories(LIEMidi PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/Include)
 target_link_libraries(LIEMidi PUBLIC rtmidi)
 target_link_libraries(LIEMidi PUBLIC imgui)
 target_link_libraries(LIEMidi PUBLIC ryml)
-target_link_libraries(LIEMidi PUBLIC ${COREAUDIO_LIBRARY})
+
+if(CMAKE_SYSTEM_NAME MATCHES "Windows")
+  # Specific windows target linking goes here
+elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
+  message("Linking additional libraries for ${CMAKE_SYSTEM_NAME}")
+  target_link_libraries(LIEMidi PUBLIC ${COREAUDIO_LIBRARY})
+  target_link_libraries(LIEMidi PUBLIC "-framework Cocoa")
+endif()
 
 add_executable(IEMidi Source/main.cpp)
 target_link_libraries(IEMidi PUBLIC LIEMidi)

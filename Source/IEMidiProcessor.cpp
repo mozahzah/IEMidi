@@ -12,7 +12,7 @@ IEResult IEMidiProcessor::ProcessMidiMessage(const std::vector<unsigned char>& M
         {
             for (const IEMidiDeviceProperty& ActiveMidiDeviceProperty : ActiveMidiDeviceProfile.Properties)
             {
-                if (ActiveMidiDeviceProperty,MidiMessage.size() >= 3 &&
+                if (ActiveMidiDeviceProperty.MidiMessage.size() >= 3 &&
                     ActiveMidiDeviceProperty.MidiMessage[0] == MidiMessage[0] &&
                     ActiveMidiDeviceProperty.MidiMessage[1] == MidiMessage[1])
                 {

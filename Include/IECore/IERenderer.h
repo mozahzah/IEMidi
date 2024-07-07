@@ -8,6 +8,8 @@
 #endif
 #if defined (_WIN32)
 #define GLFW_EXPOSE_NATIVE_WIN32 1
+#elif defined (__APPLE__)
+#define GLFW_EXPOSE_NATIVE_COCOA 1
 #endif
 
 #include "GLFW/glfw3.h"
@@ -40,18 +42,27 @@ public:
 
 public:
     void PostWindowCreated();
-    bool IsAppRunning() const;
-    bool IsAppWindowOpen() const;
-    bool IsAppWindowMinimized() const;
+    void RequestExit();
+
     void WaitEvents() const;
     void PollEvents() const;
 
-public:
+    bool IsAppRunning() const;
+    bool IsAppWindowOpen() const;
+    bool IsAppWindowMinimized() const;
+
+    void CloseAppWindow() const;
+    void ShowAppWindow() const;
     void AddOnWindowCloseCallbackFunc(const std::function<void(uint32_t, void*)>& Func, void* UserData);
     void AddOnWindowRestoreCallbackFunc(const std::function<void(uint32_t WindowID, void* UserData)>& Func, void* UserData);
 
 public:
+    std::string GetIELogoPathString();
     void DrawTelemetry() const;
+
+private:
+    void BroadcastOnWindowClosed() const;
+    void BroadcastOnWindowRestored() const;
 
 protected:
     GLFWwindow* m_AppWindow = nullptr;

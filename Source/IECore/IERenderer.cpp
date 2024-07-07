@@ -42,14 +42,7 @@ LRESULT IERenderer::WndProc(HWND Window, UINT MessageID, WPARAM WordParam, LPARA
                     }
                     case WM_LBUTTONDOWN:
                     {
-                        for (const std::pair<void*, const std::function<void(uint32_t WindowID, void* UserData)>>& Element : Renderer->m_OnWindowRestoreCallbackFunc)
-                        {
-                            Element.second(0, Element.first);
-                        }
-
-                        glfwSetWindowShouldClose(Renderer->m_AppWindow, GLFW_FALSE);
-                        glfwRestoreWindow(Renderer->m_AppWindow);
-                        
+                        Renderer->RestoreWindow();
                         break;
                     }
                 }
@@ -58,21 +51,14 @@ LRESULT IERenderer::WndProc(HWND Window, UINT MessageID, WPARAM WordParam, LPARA
             }
             case WM_CLOSE:
             {
-                glfwSetWindowShouldClose(Renderer->m_AppWindow, GLFW_TRUE);
-                glfwHideWindow(Renderer->m_AppWindow);
-                
-                for (const std::pair<void*, const std::function<void(uint32_t WindowID, void* UserData)>>& Element : Renderer->m_OnWindowCloseCallbackFunc)
-                {
-                    Element.second(0, Element.first);
-                }
-
+                Renderer->CloseWindow();
                 break;
             }
             case WM_COMMAND:
             {
                 if (LOWORD(WordParam) == ID_TRAY_EXIT)
                 {
-                    Renderer->m_ExitRequested = true;
+                    Renderer->RequestExit();
                 }
                 break;
             }
@@ -81,8 +67,64 @@ LRESULT IERenderer::WndProc(HWND Window, UINT MessageID, WPARAM WordParam, LPARA
     return CallWindowProc(m_GlfwWndProc, Window, MessageID, WordParam, LongParam);
 }
 #elif defined (__APPLE__)
-    // TODO
+extern "C" void InitializeIEAppleApp(IERenderer* Renderer);
 #endif
+
+void IERenderer::PostWindowCreated()
+{
+    /* Setup Window Icon */
+    int IconWidth, IconHeight, IconChannels;
+    
+    if (unsigned char* const IconPixelData = stbi_load(GetIELogoPathString().c_str(), &IconWidth, &IconHeight, &IconChannels, 4))
+    {
+        GLFWimage IconImage;
+        IconImage.width = IconWidth;
+        IconImage.height = IconHeight;
+        IconImage.pixels = IconPixelData;
+        glfwSetWindowIcon(m_AppWindow, 1, &IconImage);
+        stbi_image_free(IconPixelData);
+    }
+
+#if defined (_WIN32)
+    /* Setup  System Tray Icon */
+    const HWND Win32Window = glfwGetWin32Window(m_AppWindow);
+    
+    NOTIFYICONDATA NotifyIconData;
+    NotifyIconData.cbSize = sizeof(NOTIFYICONDATA);
+    NotifyIconData.hWnd = Win32Window;
+    NotifyIconData.uID = 1;
+    NotifyIconData.uVersion = NOTIFYICON_VERSION_4;
+    NotifyIconData.uFlags = NIF_ICON | NIF_TIP | NIF_GUID | NIF_MESSAGE;
+    NotifyIconData.uCallbackMessage = WM_TRAYICON;
+    NotifyIconData.hIcon = reinterpret_cast<HICON>(SendMessage(Win32Window, WM_GETICON, ICON_SMALL, 0));
+    Shell_NotifyIcon(NIM_ADD, &NotifyIconData);
+
+    m_GlfwWndProc = (WNDPROC)GetWindowLongPtr(Win32Window, GWLP_WNDPROC);
+    SetWindowLongPtr(Win32Window, GWLP_WNDPROC, (LONG_PTR)IERenderer::WndProc);
+    SetWindowLongPtr(Win32Window, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
+#elif defined (__APPLE__)
+    InitializeIEAppleApp(this);
+    glfwSetWindowCloseCallback(m_AppWindow, [](GLFWwindow* Window)
+        {
+            glfwHideWindow(Window);
+        });
+#endif
+}
+
+void IERenderer::RequestExit()
+{
+    m_ExitRequested = true;
+}
+
+void IERenderer::WaitEvents() const
+{
+    glfwWaitEvents();
+}
+
+void IERenderer::PollEvents() const
+{
+    glfwPollEvents();
+}
 
 bool IERenderer::IsAppRunning() const
 {
@@ -112,14 +154,26 @@ bool IERenderer::IsAppWindowMinimized() const
     return bIsAppWindowMinimized;
 }
 
-void IERenderer::WaitEvents() const
+void IERenderer::CloseAppWindow() const
 {
-    glfwWaitEvents();
+    if (m_AppWindow)
+    {
+        glfwSetWindowShouldClose(m_AppWindow, GLFW_TRUE);
+        glfwHideWindow(m_AppWindow);
+
+        BroadcastOnWindowClosed();
+    }
 }
 
-void IERenderer::PollEvents() const
+void IERenderer::ShowAppWindow() const
 {
-    glfwPollEvents();
+    if (m_AppWindow)
+    {
+        glfwSetWindowShouldClose(m_AppWindow, GLFW_FALSE);
+        glfwShowWindow(m_AppWindow);
+
+        BroadcastOnWindowRestored();
+    }
 }
 
 void IERenderer::AddOnWindowCloseCallbackFunc(const std::function<void(uint32_t, void*)>& Func, void* UserData)
@@ -130,6 +184,29 @@ void IERenderer::AddOnWindowCloseCallbackFunc(const std::function<void(uint32_t,
 void IERenderer::AddOnWindowRestoreCallbackFunc(const std::function<void(uint32_t WindowID, void* UserData)>& Func, void* UserData)
 {
     m_OnWindowRestoreCallbackFunc.emplace_back(std::make_pair(UserData, Func));
+}
+
+void IERenderer::BroadcastOnWindowClosed() const
+{
+    for (const std::pair<void*, const std::function<void(uint32_t WindowID, void* UserData)>>& Element : m_OnWindowCloseCallbackFunc)
+    {
+        Element.second(0, Element.first);
+    }
+}
+
+void IERenderer::BroadcastOnWindowRestored() const
+{
+    for (const std::pair<void*, const std::function<void(uint32_t WindowID, void* UserData)>>& Element : m_OnWindowRestoreCallbackFunc)
+    {
+        Element.second(0, Element.first);
+    }
+}
+
+std::string IERenderer::GetIELogoPathString()
+{
+    const std::filesystem::path AppDirectory = IEUtils::FindFolderPathUpwards(std::filesystem::current_path(), "IEMidi");
+    const std::filesystem::path IELogoPath = AppDirectory / "Resources/Logos/IE.png";
+    return IELogoPath.string();
 }
 
 void IERenderer::DrawTelemetry() const
@@ -148,43 +225,6 @@ void IERenderer::DrawTelemetry() const
     ImGui::Begin("Telemetry", nullptr, TelemetryWindowFlags);
     ImGui::Text("Frame Duration (ms): %.2f | FPS: %.0f", 1000.0f / IO.Framerate, IO.Framerate);
     ImGui::End();
-}
-
-void IERenderer::PostWindowCreated()
-{
-    /* Setup Window Icon */
-    int IconWidth, IconHeight, IconChannels;
-    const std::filesystem::path AppDirectory = IEUtils::FindFolderPathUpwards(std::filesystem::current_path(), "IEMidi");
-    const std::filesystem::path IELogoPath = AppDirectory / "Resources/Logos/IE.png";
-    if (unsigned char* const IconPixelData = stbi_load(IELogoPath.string().c_str(), &IconWidth, &IconHeight, &IconChannels, 4))
-    {
-        GLFWimage IconImage;
-        IconImage.width = IconWidth;
-        IconImage.height = IconHeight;
-        IconImage.pixels = IconPixelData;
-        glfwSetWindowIcon(m_AppWindow, 1, &IconImage);
-    }
-
-#if defined (_WIN32)
-    /* Setup  System Tray Icon */
-    const HWND Win32Window = glfwGetWin32Window(m_AppWindow);
-    
-    NOTIFYICONDATA NotifyIconData;
-    NotifyIconData.cbSize = sizeof(NOTIFYICONDATA);
-    NotifyIconData.hWnd = Win32Window;
-    NotifyIconData.uID = 1;
-    NotifyIconData.uVersion = NOTIFYICON_VERSION_4;
-    NotifyIconData.uFlags = NIF_ICON | NIF_TIP | NIF_GUID | NIF_MESSAGE;
-    NotifyIconData.uCallbackMessage = WM_TRAYICON;
-    NotifyIconData.hIcon = reinterpret_cast<HICON>(SendMessage(Win32Window, WM_GETICON, ICON_SMALL, 0));
-    Shell_NotifyIcon(NIM_ADD, &NotifyIconData);
-
-    m_GlfwWndProc = (WNDPROC)GetWindowLongPtr(Win32Window, GWLP_WNDPROC);
-    SetWindowLongPtr(Win32Window, GWLP_WNDPROC, (LONG_PTR)IERenderer::WndProc);
-    SetWindowLongPtr(Win32Window, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
-#elif defined (__APPLE__)
-    // TODO
-#endif
 }
 
 IEResult IERenderer_Vulkan::Initialize()

@@ -6,7 +6,7 @@
 
 IEMidi::IEMidi() :
 #ifdef GLFW_INCLUDE_VULKAN
-    m_Renderer(std::make_unique<IERenderer_Vulkan>()),
+    m_Renderer(std::make_shared<IERenderer_Vulkan>()),
 #endif
     m_MidiIn(std::make_unique<RtMidiIn>()),
     m_MidiOut(std::make_unique<RtMidiOut>()),
