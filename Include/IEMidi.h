@@ -48,6 +48,9 @@ public:
     void SetupBackgroundProcess();
 
 private:
+    void ResetActiveMidiDeviceProfile();
+
+private:
     static void OnAppWindowClosed(uint32_t WindowID, void* UserData);
     static void OnAppWindowRestored(uint32_t WindowID, void* UserData);
     static void OnRtMidiCallback(double TimeStamp, std::vector<unsigned char>* Message, void* UserData);
@@ -65,6 +68,6 @@ private:
 
 private:
     IEAppState m_AppState = IEAppState::None;
-    std::optional<IEMidiDeviceProfile> m_SelectedMidiDeviceProfile;
+    std::optional<IEMidiDeviceProfile> m_ActiveMidiDeviceProfile;
     bool m_bOpenMidiEditorWindow = false;
 };

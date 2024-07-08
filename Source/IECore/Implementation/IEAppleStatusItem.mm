@@ -1,21 +1,24 @@
 // Copyright © 2024 mozahzah (Incus Entertainment). All rights reserved.
 
-#import <Cocoa/Cocoa.h>
-
 #import "IECore/IERenderer.h"
 
-@interface IEAppleApp : NSObject<NSApplicationDelegate>
+#if defined (__APPLE__)
+
+#import <Cocoa/Cocoa.h>
+
+@interface IEAppleStatusItem : NSObject<NSApplicationDelegate>
 @property IERenderer* Renderer;
 @property (strong, nonatomic) NSStatusItem* StatusItem;
 @end
 
-@implementation IEAppleApp
+@implementation IEAppleStatusItem
 - (id)initWithRenderer:(IERenderer*)Renderer
 {
     self = [super init];
     if (self) 
     {
         self.Renderer = Renderer;
+        [self createStatusBarIcon];
     }    
     return self;
 }
@@ -26,7 +29,7 @@
     self.StatusItem = [StatusBar statusItemWithLength:NSSquareStatusItemLength];
     if (self.StatusItem && self.Renderer)
     {
-        NSString* LogoFilePath = [NSString stringWithUTF8String:self.Renderer->GetIELogoPathString().c_str()];
+        NSString* LogoFilePath = [NSString stringWithUTF8String:self.Renderer->GetIEIconPathString().c_str()];
         NSImage* Icon = [[NSImage alloc] initWithContentsOfFile:LogoFilePath];
         if (Icon)
         {
@@ -89,8 +92,8 @@
 }
 @end
 
-extern "C" void InitializeIEAppleApp(IERenderer* Renderer)
+extern "C" void InitializeIEAppleStatusItem(IERenderer* Renderer)
 {
-    IEAppleApp *AppleApp = [[IEAppleApp alloc] initWithRenderer:Renderer];
-    [AppleApp createStatusBarIcon];
+    IEAppleStatusItem* IEStatusItem = [[IEAppleStatusItem alloc] initWithRenderer:Renderer];
 }
+#endif

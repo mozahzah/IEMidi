@@ -6,11 +6,6 @@
 #if defined(_MSC_VER) && (_MSC_VER >= 1900) && !defined(IMGUI_DISABLE_WIN32_FUNCTIONS)
 #pragma comment(lib, "legacy_stdio_definitions")
 #endif
-#if defined (_WIN32)
-#define GLFW_EXPOSE_NATIVE_WIN32 1
-#elif defined (__APPLE__)
-#define GLFW_EXPOSE_NATIVE_COCOA 1
-#endif
 
 #include "GLFW/glfw3.h"
 #include "GLFW/glfw3native.h"
@@ -23,11 +18,6 @@ class IERenderer
 {
 public:
     virtual ~IERenderer() = default;
-
-public:
-#if defined (_WIN32)
-    static LRESULT WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-#endif
 
 public:
     virtual IEResult Initialize() = 0;
@@ -57,7 +47,9 @@ public:
     void AddOnWindowRestoreCallbackFunc(const std::function<void(uint32_t WindowID, void* UserData)>& Func, void* UserData);
 
 public:
-    std::string GetIELogoPathString();
+    GLFWwindow* GetGLFWwindow() const { return m_AppWindow; }
+    std::string GetIELogoPathString() const;
+    std::string GetIEIconPathString() const;
     void DrawTelemetry() const;
 
 private:
@@ -75,11 +67,6 @@ private:
 
 private:
     bool m_ExitRequested = false;
-    
-#if defined (_WIN32)
-    static WNDPROC m_GlfwWndProc;
-    static HMENU m_PopupWndTrayIconMenu;
-#endif
 };
 
 class IERenderer_Vulkan : public IERenderer
