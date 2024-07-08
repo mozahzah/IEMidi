@@ -92,7 +92,7 @@
 }
 @end
 
-extern "C" void InitializeIEAppleStatusItem(IERenderer* Renderer)
+extern "C" void InitializeIEAppleApp(IERenderer* Renderer)
 {
     IEAppleStatusItem* IEStatusItem = [[IEAppleStatusItem alloc] initWithRenderer:Renderer];
 }

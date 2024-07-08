@@ -8,9 +8,9 @@
 #include "IECore/IEUtils.h"
 
 #if defined (_WIN32)
-extern void InitializeIEWin32TrayIcon(IERenderer* Renderer);
+extern void InitializeIEWin32App(IERenderer* Renderer);
 #elif defined (__APPLE__)
-extern "C" void InitializeIEAppleStatusItem(IERenderer* Renderer);
+extern "C" void InitializeIEAppleApp(IERenderer* Renderer);
 #endif
 
 void IERenderer::PostWindowCreated()
@@ -39,9 +39,9 @@ void IERenderer::PostWindowCreated()
         });
 
 #if defined (_WIN32)
-    InitializeIEWin32TrayIcon(this);
+    InitializeIEWin32App(this);
 #elif defined (__APPLE__)
-    InitializeIEAppleStatusItem(this);
+    InitializeIEAppleApp(this);
 #endif
 }
 

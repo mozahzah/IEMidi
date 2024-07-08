@@ -87,13 +87,15 @@ target_link_libraries(LIEMidi PUBLIC rtmidi)
 target_link_libraries(LIEMidi PUBLIC imgui)
 target_link_libraries(LIEMidi PUBLIC ryml)
 
+message("Linking additional libraries for ${CMAKE_SYSTEM_NAME}")
 if(CMAKE_SYSTEM_NAME MATCHES "Windows")
-  # Specific windows target linking goes here
+  target_link_libraries(LIEMidi PUBLIC dwmapi)
+  target_link_libraries(LIEMidi PUBLIC uxtheme)
 elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
-  message("Linking additional libraries for ${CMAKE_SYSTEM_NAME}")
   target_link_libraries(LIEMidi PUBLIC ${COREAUDIO_LIBRARY})
   target_link_libraries(LIEMidi PUBLIC "-framework Cocoa")
 endif()
 
 add_executable(IEMidi Source/main.cpp)
 target_link_libraries(IEMidi PUBLIC LIEMidi)
+begin_section_message("Finished Setting IEMidi")
