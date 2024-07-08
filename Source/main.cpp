@@ -36,6 +36,7 @@ int main()
                     Renderer.NewFrame();
                     ImGui::NewFrame();
 
+                    //ImGui::ShowDemoWindow();
                     IEMidiApp.OnPreFrameRender();
 
                     Renderer.DrawTelemetry();

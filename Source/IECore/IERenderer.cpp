@@ -60,6 +60,11 @@ void IERenderer::PollEvents() const
     glfwPollEvents();
 }
 
+void IERenderer::PostEmptyEvent() const
+{
+    glfwPostEmptyEvent();
+}
+
 bool IERenderer::IsAppRunning() const
 {
     return !m_ExitRequested;

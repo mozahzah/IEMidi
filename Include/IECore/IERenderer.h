@@ -40,6 +40,7 @@ public:
 
     void WaitEvents() const;
     void PollEvents() const;
+    void PostEmptyEvent() const;
 
     bool IsAppRunning() const;
     bool IsAppWindowOpen() const;

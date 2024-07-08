@@ -14,6 +14,8 @@ namespace ImGui
 
     /* Widgets */
     void FileFinder(const char* Label, int Depth, std::string& SelectedFile);
+    bool RedButton(const char* Label);
+    bool GreenButton(const char* Label);
 
     /* Other */
     void ClearCurrentWindowStoredStates();

@@ -3,7 +3,7 @@
 #pragma once
 
 #include "imgui.h"
-#include "RtMidi.h"
+#include "IEExtensions/ie.imgui.h"
 
 #include "IECore/IECore.h"
 #include "IECore/IERenderer.h"
@@ -68,6 +68,5 @@ private:
 
 private:
     IEAppState m_AppState = IEAppState::None;
-    std::optional<IEMidiDeviceProfile> m_ActiveMidiDeviceProfile;
     bool m_bOpenMidiEditorWindow = false;
 };

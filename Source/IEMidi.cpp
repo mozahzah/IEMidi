@@ -2,8 +2,6 @@
 
 #include "IEMidi.h"
 
-#include "IECore/IEUtils.h"
-
 IEMidi::IEMidi() :
 #ifdef GLFW_INCLUDE_VULKAN
     m_Renderer(std::make_shared<IERenderer_Vulkan>()),
@@ -43,6 +41,7 @@ void IEMidi::OnPreFrameRender()
         case IEAppState::MidiDeviceEditor:
         {
             DrawSelectedMidiDeviceMapperWindow();
+            GetRenderer().PostEmptyEvent();
             break;
         }
         default:
@@ -111,25 +110,15 @@ IEResult IEMidi::OnMidiDeviceSelected(const std::string& MidiDeviceName, uint32_
                 (std::to_string(OutputPortNumber).length() + 1))) != std::string::npos)
             {
                 MidiOut.openPort(OutputPortNumber);
-                m_ActiveMidiDeviceProfile = IEMidiDeviceProfile(MidiDeviceName, InputPortNumber, OutputPortNumber);
+                GetMidiProcessor().ActivateMidiDeviceProfile(IEMidiDeviceProfile(MidiDeviceName, InputPortNumber, OutputPortNumber));
                 break;
             }
         }
     }
 
-    if (m_ActiveMidiDeviceProfile.has_value())
+    if (GetMidiProfileManager().LoadProfile(GetMidiProcessor().GetActiveMidiDeviceProfile()))
     {
-        MidiIn.setCallback(&IEMidi::OnRtMidiCallback, this);
-
-        if (GetMidiProfileManager().LoadProfile(m_ActiveMidiDeviceProfile.value()))
-        {
-            for (const std::vector<unsigned char>& MidiMessage : m_ActiveMidiDeviceProfile->InitialOutputMidiMessages)
-            {
-                MidiOut.sendMessage(&MidiMessage);
-            }
-        }
-
-        m_AppState = IEAppState::MidiDeviceEditor;
+        SetAppState(IEAppState::MidiDeviceEditor);
         m_bOpenMidiEditorWindow = true;
 
         Result.Type = IEResult::Type::Success;
@@ -138,54 +127,49 @@ IEResult IEMidi::OnMidiDeviceSelected(const std::string& MidiDeviceName, uint32_
             m_ActiveMidiDeviceProfile->GetInputPortNumber(),
             m_ActiveMidiDeviceProfile->GetOutputPortNumber());
     }
+
     return Result;
 }
 
 void IEMidi::DrawSelectedMidiDeviceMapperWindow()
 {
-    if (m_ActiveMidiDeviceProfile.has_value())
+    IEMidiDeviceProfile& ActiveMidiDeviceProfile = GetMidiProcessor().GetActiveMidiDeviceProfile();
+
+    ImGuiIO& IO = ImGui::GetIO();
+
+    static constexpr uint32_t WindowFlags = ImGuiWindowFlags_NoResize |
+                                            ImGuiWindowFlags_NoMove |
+                                            ImGuiWindowFlags_NoCollapse |
+                                            ImGuiWindowFlags_NoTitleBar;
+
+
+    ImGui::SetNextWindowSize(ImVec2(IO.DisplaySize.x, IO.DisplaySize.y), ImGuiCond_Always);
+    ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f));
+
+    const std::string WindowLabel = std::format("Editing {}", ActiveMidiDeviceProfile.Name);
+    if (m_bOpenMidiEditorWindow)
     {
-        ImGuiIO& IO = ImGui::GetIO();
+        ImGui::Begin(WindowLabel.c_str(), &m_bOpenMidiEditorWindow, WindowFlags);
 
-        static constexpr uint32_t WindowFlags = ImGuiWindowFlags_NoResize |
-                                                ImGuiWindowFlags_NoMove |
-                                                ImGuiWindowFlags_NoScrollbar |
-                                                ImGuiWindowFlags_NoScrollWithMouse |
-                                                ImGuiWindowFlags_NoCollapse;
+        m_MidiEditor->DrawMidiDeviceProfileEditor(ActiveMidiDeviceProfile);
 
-
-        const float WindowWidth = IO.DisplaySize.x * 0.8f;
-        const float WindowHeight = IO.DisplaySize.y;
-
-        const float WindowPosX = (IO.DisplaySize.x - WindowWidth);
-        const float WindowPosY = (IO.DisplaySize.y - WindowHeight);
-
-        ImGui::SetNextWindowSize(ImVec2(WindowWidth, WindowHeight), ImGuiCond_Always);
-        ImGui::SetNextWindowPos(ImVec2(WindowPosX, WindowPosY));
-
-        const std::string WindowLabel = std::format("Editing {}", m_ActiveMidiDeviceProfile->Name);
-        if (m_bOpenMidiEditorWindow)
+        const ImVec2 CloseSelectableSize = ImVec2(ImGui::CalcTextSize("Save & Close"));
+        ImGui::SetCursorPos(ImVec2(IO.DisplaySize.x - CloseSelectableSize.x - 20.0f, IO.DisplaySize.y - CloseSelectableSize.y - 20.0f));
+        if (ImGui::GreenButton("Save & Close"))
         {
-            ImGui::Begin(WindowLabel.c_str(), &m_bOpenMidiEditorWindow, WindowFlags);
-            m_MidiEditor->DrawMidiDeviceProfileEditor(m_ActiveMidiDeviceProfile.value());
-            ImGui::End();
+            m_bOpenMidiEditorWindow = false;
         }
-        else
+        ImGui::End();
+    }
+    else
+    {
+        if (GetMidiProfileManager().SaveProfile(ActiveMidiDeviceProfile))
         {
             SetAppState(IEAppState::MidiDeviceSelection);
-            if (GetMidiProfileManager().SaveProfile(m_ActiveMidiDeviceProfile.value()))
-            {
-                m_ActiveMidiDeviceProfile.reset();
-
-                RtMidiIn& MidiIn = GetMidiIn();
-                MidiIn.closePort();
-                MidiIn.cancelCallback();
-
-                RtMidiOut& MidiOut = GetMidiOut();
-                MidiOut.closePort();
-            }
+            ResetActiveMidiDeviceProfile();
         }
     }
+    
 }
 
 void IEMidi::SetupBackgroundProcess()
@@ -289,9 +273,9 @@ void IEMidi::OnRtMidiCallback(double TimeStamp, std::vector<unsigned char>* Mess
                 {
                     if (IEMidiApp->m_ActiveMidiDeviceProfile.has_value())
                     {
-                        IEMidiDeviceProfile& SelectedMidiDeviceProfile = IEMidiApp->m_ActiveMidiDeviceProfile.value();
+                        IEMidiDeviceProfile& ActiveMidiDeviceProfile = IEMidiApp->m_ActiveMidiDeviceProfile.value();
                         const size_t MidiMessageSize = MidiMessage.size();
-                        for (IEMidiDeviceProperty& MidiDeviceProperty : SelectedMidiDeviceProfile.Properties)
+                        for (IEMidiDeviceProperty& MidiDeviceProperty : ActiveMidiDeviceProfile.Properties)
                         {
                             if (IEMidiApp->GetMidiProcessor().IsMidiDevicePropertyActive(MidiDeviceProperty))
                             {
@@ -307,7 +291,7 @@ void IEMidi::OnRtMidiCallback(double TimeStamp, std::vector<unsigned char>* Mess
                 }
                 case IEAppState::Background:
                 {
-                    IEMidiApp->GetMidiProcessor().ProcessMidiMessage(MidiMessage);
+                    IEMidiApp->GetMidiProcessor().ProcessMidiInputMessage(MidiMessage);
                     break;
                 }
                 default:

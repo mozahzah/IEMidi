@@ -2,15 +2,15 @@
 
 #include "IEMidiProcessor.h"
 
-IEResult IEMidiProcessor::ProcessMidiMessage(const std::vector<unsigned char>& MidiMessage)
+IEResult IEMidiProcessor::ProcessMidiInputMessage(const std::vector<unsigned char>& MidiMessage)
 {
     IEResult Result(IEResult::Type::Fail, "Failed to process Midi");
 
     if (IEAssert(MidiMessage.size() >= 3))
     {
-        for (const IEMidiDeviceProfile& ActiveMidiDeviceProfile : m_ActiveMidiDeviceProfiles)
+        if (m_ActiveMidiDeviceProfile.has_value())
         {
-            for (const IEMidiDeviceProperty& ActiveMidiDeviceProperty : ActiveMidiDeviceProfile.Properties)
+            for (const IEMidiDeviceProperty& ActiveMidiDeviceProperty : m_ActiveMidiDeviceProfile->Properties)
             {
                 if (ActiveMidiDeviceProperty.MidiMessage.size() >= 3 &&
                     ActiveMidiDeviceProperty.MidiMessage[0] == MidiMessage[0] &&
@@ -141,19 +141,70 @@ IEResult IEMidiProcessor::ProcessMidiMessage(const std::vector<unsigned char>& M
     return Result;
 }
 
+IEResult IEMidiProcessor::SendMidiOutputMessage(const std::vector<unsigned char>& MidiMessage)
+{
+    IEResult Result(IEResult::Type::Fail, "Successfully to send midi output message");
+    if (IEAssert(MidiMessage.size() >= 3))
+    {
+        if (m_ActiveMidiDeviceProfile.has_value())
+        {
+            GetMidiOut().sendMessage(&MidiMessage);
+
+            Result.Type = IEResult::Type::Success;
+            Result.Message = std::string("Successfully sent midi output message");
+        }
+    }
+    return Result;
+}
+
+IEMidiDeviceProfile& IEMidiProcessor::GetActiveMidiDeviceProfile()
+{
+    return m_ActiveMidiDeviceProfile.value();
+}
+
 bool IEMidiProcessor::IsMidiDeviceProfileActive(const IEMidiDeviceProfile& MidiDeviceProfile) const
 {
-    return m_ActiveMidiDeviceProfiles.contains(MidiDeviceProfile);
+    return m_ActiveMidiDeviceProfile.value() == MidiDeviceProfile;
 }
 
 void IEMidiProcessor::ActivateMidiDeviceProfile(const IEMidiDeviceProfile& MidiDeviceProfile)
 {
-    m_ActiveMidiDeviceProfiles.emplace(MidiDeviceProfile);
+    RtMidiIn& MidiIn = GetMidiIn();
+    RtMidiOut& MidiOut = GetMidiOut();
+
+    if (!IsMidiDeviceProfileActive(MidiDeviceProfile))
+    {
+        MidiIn.openPort(MidiDeviceProfile.GetInputPortNumber());
+        MidiOut.openPort(MidiDeviceProfile.GetOutputPortNumber());
+
+        for (const std::vector<unsigned char>& MidiMessage : MidiDeviceProfile.InitialOutputMidiMessages)
+        {
+            MidiOut.sendMessage(&MidiMessage);
+        }
+
+        MidiIn.setCallback(&IEMidiProcessor::OnRtMidiCallback, this);
+    }
 }
 
 void IEMidiProcessor::DeactivateMidiDeviceProfile(const IEMidiDeviceProfile& MidiDeviceProfile)
 {
-   m_ActiveMidiDeviceProfiles.erase(MidiDeviceProfile);
+    if (IsMidiDeviceProfileActive(MidiDeviceProfile))
+    {
+        m_ActiveMidiDeviceProfile.reset();
+
+        RtMidiIn& MidiIn = GetMidiIn();
+        if (MidiIn.isPortOpen())
+        {
+            MidiIn.closePort();
+            MidiIn.cancelCallback();
+        }
+        
+        RtMidiOut& MidiOut = GetMidiOut();
+        if (MidiOut.isPortOpen())
+        {
+            MidiOut.closePort();
+        }
+    }
 }
 
 bool IEMidiProcessor::IsMidiDevicePropertyActive(const IEMidiDeviceProperty& MidiDeviceProperty) const
@@ -169,4 +220,54 @@ void IEMidiProcessor::ActivateMidiDeviceProperty(const IEMidiDeviceProperty& Mid
 void IEMidiProcessor::DeactivateMidiDeviceProperty(const IEMidiDeviceProperty& MidiDeviceProperty)
 {
     m_ActiveMidiDeviceProperties.erase(MidiDeviceProperty);
+}
+
+void IEMidiProcessor::OnRtMidiCallback(double TimeStamp, std::vector<unsigned char>* Message, void* UserData)
+{
+    if (Message && UserData)
+    {
+        const std::vector<unsigned char>& MidiMessage = *Message;
+        if (IEMidiProcessor* const MidiProcessor = reinterpret_cast<IEMidiProcessor*>(UserData))
+        {
+            MidiProcessor->ProcessMidiInputMessage(MidiMessage);
+
+            // switch (IEMidiApp->GetAppState())
+            // {
+            //     case IEAppState::MidiDeviceEditor:
+            //     {
+            //         // if (IEMidiApp->m_ActiveMidiDeviceProfile.has_value())
+            //         // {
+            //         //     IEMidiDeviceProfile& ActiveMidiDeviceProfile = IEMidiApp->m_ActiveMidiDeviceProfile.value();
+            //         //     const size_t MidiMessageSize = MidiMessage.size();
+            //         //     for (IEMidiDeviceProperty& MidiDeviceProperty : ActiveMidiDeviceProfile.Properties)
+            //         //     {
+            //         //         if (IEMidiApp->GetMidiProcessor().IsMidiDevicePropertyActive(MidiDeviceProperty))
+            //         //         {
+            //         //             if (IEAssert(MidiMessageSize == MidiDeviceProperty.MidiMessage.size()))
+            //         //             {
+            //         //                 MidiDeviceProperty.MidiMessage = MidiMessage;
+            //         //                 IEMidiApp->GetMidiProcessor().DeactivateMidiDeviceProperty(MidiDeviceProperty);
+            //         //             }
+            //         //         }
+            //         //     }
+            //         // }
+            //         break;
+            //     }
+            //     case IEAppState::Background:
+            //     {
+                    
+            //         break;
+            //     }
+            //     default:
+            //     {
+            //         break;
+            //     }
+            // }
+        }
+    }
+}
+
+void IEMidiProcessor::OnRtMidiErrorCallback(RtMidiError::Type RtMidiErrorType, const std::string& ErrorText, void* UserData)
+{
+    IELOG_ERROR("%s", ErrorText.c_str());
 }
