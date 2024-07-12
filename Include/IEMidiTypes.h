@@ -60,6 +60,8 @@ public:
 
 public:
     const uint32_t RuntimeID;
+    bool bIsRecording = false;
+    bool bIsConsoleCommandActive = false;
 
 public:
     std::string MidiDeviceName = std::string();
@@ -82,7 +84,7 @@ struct IEMidiDevicePropertyHash
 struct IEMidiDeviceProfile
 {
 public:
-    IEMidiDeviceProfile() = delete;
+    IEMidiDeviceProfile() = default;
     IEMidiDeviceProfile(const std::string& NameID, uint32_t InputPortNumber, uint32_t OutputPortNumer) :
                         Name(NameID), m_InputPortNumber(InputPortNumber), m_OutputPortNumber(OutputPortNumer) {}
     bool operator==(const IEMidiDeviceProfile& Other) const

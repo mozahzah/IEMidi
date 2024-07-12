@@ -29,8 +29,8 @@ public:
 
 public:
     IERenderer& GetRenderer() const { return *m_Renderer; }
-    RtMidiIn& GetMidiIn() const { return *m_MidiIn; }
-    RtMidiOut& GetMidiOut() const { return *m_MidiOut; }
+
+public:
     IEMidiProcessor& GetMidiProcessor() const { return *m_MidiProcessor; }
     IEMidiProfileManager& GetMidiProfileManager() const { return *m_MidiProfileManager; }
     IEMidiEditor& GetMidiEditor() const { return *m_MidiEditor; }
@@ -43,23 +43,14 @@ public:
     void OnPostFrameRender();
 
     void DrawMidiDeviceSelectionWindow();
-    IEResult OnMidiDeviceSelected(const std::string& DeviceName, uint32_t InputPortNumber);
-    void DrawSelectedMidiDeviceMapperWindow();
-    void SetupBackgroundProcess();
-
-private:
-    void ResetActiveMidiDeviceProfile();
+    void DrawSelectedMidiDeviceEditorWindow();
 
 private:
     static void OnAppWindowClosed(uint32_t WindowID, void* UserData);
     static void OnAppWindowRestored(uint32_t WindowID, void* UserData);
-    static void OnRtMidiCallback(double TimeStamp, std::vector<unsigned char>* Message, void* UserData);
-    static void OnRtMidiErrorCallback(RtMidiError::Type RtMidiErrorType, const std::string& ErrorText, void* UserData);
 
 private:
     std::shared_ptr<IERenderer> m_Renderer;
-    std::unique_ptr<RtMidiIn> m_MidiIn;
-    std::unique_ptr<RtMidiOut> m_MidiOut;
 
 private:
     std::shared_ptr<IEMidiProcessor> m_MidiProcessor;
@@ -68,5 +59,4 @@ private:
 
 private:
     IEAppState m_AppState = IEAppState::None;
-    bool m_bOpenMidiEditorWindow = false;
 };

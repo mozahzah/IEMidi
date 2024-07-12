@@ -42,7 +42,10 @@
 
             NSView *menuTitleView = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, 200, 30)];
             NSTextField *menuTitleLabel = [[NSTextField alloc] initWithFrame:NSMakeRect(10, 0, 190, 20)];
-            [menuTitleLabel setStringValue:@"IEMidi"];
+            NSFont *titleFont = [NSFont systemFontOfSize:13 weight:NSFontWeightSemibold];
+            NSDictionary *titleAttributes = @{NSFontAttributeName: titleFont};
+            NSAttributedString *titleAttribute = [[NSAttributedString alloc] initWithString:@"IEMidi" attributes:titleAttributes];
+            [menuTitleLabel setAttributedStringValue:titleAttribute];
             [menuTitleLabel setEditable:NO];
             [menuTitleLabel setBezeled:NO];
             [menuTitleLabel setDrawsBackground:NO];
@@ -79,7 +82,7 @@
 {
     if (self.Renderer)
     {
-        self.Renderer->ShowAppWindow();
+        self.Renderer->RestoreAppWindow();
     }
 }
 

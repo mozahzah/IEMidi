@@ -43,7 +43,7 @@ LRESULT IEWndProc(HWND Window, UINT MessageID, WPARAM WordParam, LPARAM LongPara
                     }
                     case WM_LBUTTONDOWN:
                     {
-                        Renderer->ShowAppWindow();
+                        Renderer->RestoreAppWindow();
                         break;
                     }
                 }
@@ -56,7 +56,7 @@ LRESULT IEWndProc(HWND Window, UINT MessageID, WPARAM WordParam, LPARAM LongPara
                 {
                     case ID_TRAY_EDIT:
                     {
-                        Renderer->ShowAppWindow();
+                        Renderer->RestoreAppWindow();
                         break;
                     }
                     case ID_TRAY_EXIT:

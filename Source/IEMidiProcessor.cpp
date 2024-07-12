@@ -10,7 +10,7 @@ IEResult IEMidiProcessor::ProcessMidiInputMessage(const std::vector<unsigned cha
     {
         if (m_ActiveMidiDeviceProfile.has_value())
         {
-            for (const IEMidiDeviceProperty& ActiveMidiDeviceProperty : m_ActiveMidiDeviceProfile->Properties)
+            for (IEMidiDeviceProperty& ActiveMidiDeviceProperty : m_ActiveMidiDeviceProfile->Properties)
             {
                 if (ActiveMidiDeviceProperty.MidiMessage.size() >= 3 &&
                     ActiveMidiDeviceProperty.MidiMessage[0] == MidiMessage[0] &&
@@ -76,15 +76,15 @@ IEResult IEMidiProcessor::ProcessMidiInputMessage(const std::vector<unsigned cha
                                             const bool bOn = static_cast<unsigned int>(MidiMessage[2]) != 0;
                                             if (bOn)
                                             {
-                                                if (IsMidiDevicePropertyActive(ActiveMidiDeviceProperty))
+                                                if (ActiveMidiDeviceProperty.bIsConsoleCommandActive)
                                                 {
                                                     m_ConsoleCommandAction->ExecuteConsoleCommand(ActiveMidiDeviceProperty.ConsoleCommand, 0.0f);
-                                                    DeactivateMidiDeviceProperty(ActiveMidiDeviceProperty);
+                                                    ActiveMidiDeviceProperty.bIsConsoleCommandActive = false;
                                                 }
                                                 else
                                                 {
                                                     m_ConsoleCommandAction->ExecuteConsoleCommand(ActiveMidiDeviceProperty.ConsoleCommand, 1.0f);
-                                                    ActivateMidiDeviceProperty(ActiveMidiDeviceProperty);
+                                                    ActiveMidiDeviceProperty.bIsConsoleCommandActive = true;
                                                 }
                                             }
                                         }
@@ -143,10 +143,10 @@ IEResult IEMidiProcessor::ProcessMidiInputMessage(const std::vector<unsigned cha
 
 IEResult IEMidiProcessor::SendMidiOutputMessage(const std::vector<unsigned char>& MidiMessage)
 {
-    IEResult Result(IEResult::Type::Fail, "Successfully to send midi output message");
+    IEResult Result(IEResult::Type::Fail, "Failed to send midi output message");
     if (IEAssert(MidiMessage.size() >= 3))
     {
-        if (m_ActiveMidiDeviceProfile.has_value())
+        if (m_ActiveMidiDeviceProfile)
         {
             GetMidiOut().sendMessage(&MidiMessage);
 
@@ -157,69 +157,78 @@ IEResult IEMidiProcessor::SendMidiOutputMessage(const std::vector<unsigned char>
     return Result;
 }
 
+std::vector<std::string> IEMidiProcessor::GetAvailableMidiDevices() const
+{
+    std::vector<std::string> AvailableMidiDevices;
+
+    RtMidiIn& MidiIn = GetMidiIn();
+    for (int InputPortNumber = 0; InputPortNumber < MidiIn.getPortCount(); InputPortNumber++)
+    {
+        const std::string MidiDeviceName = MidiIn.getPortName(InputPortNumber);
+        AvailableMidiDevices.emplace_back(MidiDeviceName.substr(0,
+            MidiDeviceName.length() - (std::to_string(InputPortNumber).length() + 1)));
+    }
+    return AvailableMidiDevices;
+}
+
 IEMidiDeviceProfile& IEMidiProcessor::GetActiveMidiDeviceProfile()
 {
+    if (!m_ActiveMidiDeviceProfile.has_value())
+    {
+        IELOG_ERROR("No active midi device profile");
+        abort();
+    }
+
     return m_ActiveMidiDeviceProfile.value();
 }
 
-bool IEMidiProcessor::IsMidiDeviceProfileActive(const IEMidiDeviceProfile& MidiDeviceProfile) const
-{
-    return m_ActiveMidiDeviceProfile.value() == MidiDeviceProfile;
-}
-
-void IEMidiProcessor::ActivateMidiDeviceProfile(const IEMidiDeviceProfile& MidiDeviceProfile)
+void IEMidiProcessor::ActivateMidiDeviceProfile(const std::string& MidiDeviceName)
 {
     RtMidiIn& MidiIn = GetMidiIn();
-    RtMidiOut& MidiOut = GetMidiOut();
-
-    if (!IsMidiDeviceProfileActive(MidiDeviceProfile))
+    for (int InputPortNumber = 0; InputPortNumber < MidiIn.getPortCount(); InputPortNumber++)
     {
-        MidiIn.openPort(MidiDeviceProfile.GetInputPortNumber());
-        MidiOut.openPort(MidiDeviceProfile.GetOutputPortNumber());
+        const std::string MidiDeviceName = MidiIn.getPortName(InputPortNumber);
 
-        for (const std::vector<unsigned char>& MidiMessage : MidiDeviceProfile.InitialOutputMidiMessages)
-        {
-            MidiOut.sendMessage(&MidiMessage);
-        }
-
-        MidiIn.setCallback(&IEMidiProcessor::OnRtMidiCallback, this);
-    }
-}
-
-void IEMidiProcessor::DeactivateMidiDeviceProfile(const IEMidiDeviceProfile& MidiDeviceProfile)
-{
-    if (IsMidiDeviceProfileActive(MidiDeviceProfile))
-    {
-        m_ActiveMidiDeviceProfile.reset();
-
-        RtMidiIn& MidiIn = GetMidiIn();
-        if (MidiIn.isPortOpen())
-        {
-            MidiIn.closePort();
-            MidiIn.cancelCallback();
-        }
-        
         RtMidiOut& MidiOut = GetMidiOut();
-        if (MidiOut.isPortOpen())
+        for (int OutputPortNumber = 0; OutputPortNumber < MidiOut.getPortCount(); OutputPortNumber++)
         {
-            MidiOut.closePort();
+            if (MidiOut.getPortName(OutputPortNumber).find(MidiDeviceName) != std::string::npos ||
+                MidiOut.getPortName(OutputPortNumber).find(MidiDeviceName.substr(0, MidiDeviceName.length() -
+                (std::to_string(OutputPortNumber).length() + 1))) != std::string::npos)
+            {
+                m_ActiveMidiDeviceProfile = IEMidiDeviceProfile(MidiDeviceName, InputPortNumber, OutputPortNumber);
+
+                MidiIn.openPort(m_ActiveMidiDeviceProfile->GetInputPortNumber());
+                MidiOut.openPort(m_ActiveMidiDeviceProfile->GetOutputPortNumber());
+
+                for (const std::vector<unsigned char>& MidiMessage : m_ActiveMidiDeviceProfile->InitialOutputMidiMessages)
+                {
+                    MidiOut.sendMessage(&MidiMessage);
+                }
+
+                MidiIn.setCallback(&IEMidiProcessor::OnRtMidiCallback, this);
+                break;
+            }
         }
+    }     
+}
+
+void IEMidiProcessor::DeactivateMidiDeviceProfile()
+{
+    RtMidiIn& MidiIn = GetMidiIn();
+    if (MidiIn.isPortOpen())
+    {
+        MidiIn.closePort();
+        MidiIn.cancelCallback();
     }
-}
+    
+    RtMidiOut& MidiOut = GetMidiOut();
+    if (MidiOut.isPortOpen())
+    {
+        MidiOut.closePort();
+    }
 
-bool IEMidiProcessor::IsMidiDevicePropertyActive(const IEMidiDeviceProperty& MidiDeviceProperty) const
-{
-    return m_ActiveMidiDeviceProperties.contains(MidiDeviceProperty);
-}
-
-void IEMidiProcessor::ActivateMidiDeviceProperty(const IEMidiDeviceProperty& MidiDeviceProperty)
-{
-    m_ActiveMidiDeviceProperties.emplace(MidiDeviceProperty);
-}
-
-void IEMidiProcessor::DeactivateMidiDeviceProperty(const IEMidiDeviceProperty& MidiDeviceProperty)
-{
-    m_ActiveMidiDeviceProperties.erase(MidiDeviceProperty);
+    m_ActiveMidiDeviceProfile.reset();
 }
 
 void IEMidiProcessor::OnRtMidiCallback(double TimeStamp, std::vector<unsigned char>* Message, void* UserData)
@@ -229,40 +238,19 @@ void IEMidiProcessor::OnRtMidiCallback(double TimeStamp, std::vector<unsigned ch
         const std::vector<unsigned char>& MidiMessage = *Message;
         if (IEMidiProcessor* const MidiProcessor = reinterpret_cast<IEMidiProcessor*>(UserData))
         {
+            if (MidiProcessor->m_ActiveMidiDeviceProfile)
+            {
+                for (IEMidiDeviceProperty& MidiDeviceProperty : MidiProcessor->m_ActiveMidiDeviceProfile->Properties)
+                {
+                    if (MidiDeviceProperty.bIsRecording)
+                    {
+                        MidiDeviceProperty.MidiMessage = MidiMessage;
+                        MidiDeviceProperty.bIsRecording = false;
+                    }
+                }
+            }
+            
             MidiProcessor->ProcessMidiInputMessage(MidiMessage);
-
-            // switch (IEMidiApp->GetAppState())
-            // {
-            //     case IEAppState::MidiDeviceEditor:
-            //     {
-            //         // if (IEMidiApp->m_ActiveMidiDeviceProfile.has_value())
-            //         // {
-            //         //     IEMidiDeviceProfile& ActiveMidiDeviceProfile = IEMidiApp->m_ActiveMidiDeviceProfile.value();
-            //         //     const size_t MidiMessageSize = MidiMessage.size();
-            //         //     for (IEMidiDeviceProperty& MidiDeviceProperty : ActiveMidiDeviceProfile.Properties)
-            //         //     {
-            //         //         if (IEMidiApp->GetMidiProcessor().IsMidiDevicePropertyActive(MidiDeviceProperty))
-            //         //         {
-            //         //             if (IEAssert(MidiMessageSize == MidiDeviceProperty.MidiMessage.size()))
-            //         //             {
-            //         //                 MidiDeviceProperty.MidiMessage = MidiMessage;
-            //         //                 IEMidiApp->GetMidiProcessor().DeactivateMidiDeviceProperty(MidiDeviceProperty);
-            //         //             }
-            //         //         }
-            //         //     }
-            //         // }
-            //         break;
-            //     }
-            //     case IEAppState::Background:
-            //     {
-                    
-            //         break;
-            //     }
-            //     default:
-            //     {
-            //         break;
-            //     }
-            // }
         }
     }
 }

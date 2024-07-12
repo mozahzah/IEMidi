@@ -104,7 +104,7 @@ void IERenderer::CloseAppWindow() const
     }
 }
 
-void IERenderer::ShowAppWindow() const
+void IERenderer::RestoreAppWindow() const
 {
     if (m_AppWindow)
     {

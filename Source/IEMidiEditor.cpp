@@ -169,15 +169,15 @@ void IEMidiEditor::DrawMidiDevicePropertyEditor(IEMidiDeviceProperty& MidiDevice
         }
   
         ImGui::TableNextColumn();
-        ImGui::SetCursorPos(ImVec2(IO.DisplaySize.x * RecordButtonPosXScaleFactor, ImGui::GetCursorPosY()));
+        ImGui::SetCursorPosX(IO.DisplaySize.x * RecordButtonPosXScaleFactor);
 
         ImGui::GetWindowDrawList()->ChannelsSplit(2);
         ImGui::GetWindowDrawList()->ChannelsSetCurrent(1);
         if (m_MidiDeviceProcessor)
         {
-            if (ImGui::Selectable("Record Midi", m_MidiDeviceProcessor->IsMidiDevicePropertyActive(MidiDeviceProperty)))
+            if (ImGui::Selectable("Record Midi", MidiDeviceProperty.bIsRecording))
             {
-                m_MidiDeviceProcessor->ActivateMidiDeviceProperty(MidiDeviceProperty);
+                MidiDeviceProperty.bIsRecording = true;
             }
         }
         else
@@ -196,7 +196,7 @@ void IEMidiEditor::DrawMidiDevicePropertyEditor(IEMidiDeviceProperty& MidiDevice
         std::copy(MidiMessageBuf.begin(), MidiMessageBuf.end(), MidiDeviceProperty.MidiMessage.begin());
 
         ImGui::TableNextColumn();
-        ImGui::SetCursorPos(ImVec2(IO.DisplaySize.x * DeleteButtonPosXScaleFactor, ImGui::GetCursorPosY()));
+        ImGui::SetCursorPosX(IO.DisplaySize.x * DeleteButtonPosXScaleFactor);
         bDeleteRequested = ImGui::RedButton("Delete");
 
         ImGui::EndTable();

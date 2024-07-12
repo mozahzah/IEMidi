@@ -47,7 +47,7 @@ public:
     bool IsAppWindowMinimized() const;
 
     void CloseAppWindow() const;
-    void ShowAppWindow() const;
+    void RestoreAppWindow() const;
     void AddOnWindowCloseCallbackFunc(const std::function<void(uint32_t, void*)>& Func, void* UserData);
     void AddOnWindowRestoreCallbackFunc(const std::function<void(uint32_t WindowID, void* UserData)>& Func, void* UserData);
 

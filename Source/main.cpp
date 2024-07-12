@@ -28,11 +28,9 @@ int main()
 
                 while (Renderer.IsAppRunning())
                 {
-                    Renderer.WaitEvents();
-                    Renderer.CheckAndResizeSwapChain();
-
                     StartFrameTime = IEClock::now();
 
+                    Renderer.CheckAndResizeSwapChain();
                     Renderer.NewFrame();
                     ImGui::NewFrame();
 
@@ -48,11 +46,7 @@ int main()
                     IEMidiApp.OnPostFrameRender();
 
                     CapturedDeltaTime = std::chrono::duration_cast<IEDurationMs>(IEClock::now() - StartFrameTime);
-                    const int32_t SleepDurationMs = TARGET_FRAME_DURATION - CapturedDeltaTime.count();
-                    if (SleepDurationMs > 1)
-                    {
-                        std::this_thread::sleep_for(std::chrono::milliseconds(SleepDurationMs));
-                    }
+                    Renderer.WaitEvents();
                 }
             }
         }

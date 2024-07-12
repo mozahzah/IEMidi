@@ -32,16 +32,10 @@ public:
     IEResult ProcessMidiInputMessage(const std::vector<unsigned char>& MidiMessage);
     IEResult SendMidiOutputMessage(const std::vector<unsigned char>& MidiMessage);
 
+    std::vector<std::string> GetAvailableMidiDevices() const;
+    void ActivateMidiDeviceProfile(const std::string& MidiDeviceName);
+    void DeactivateMidiDeviceProfile();
     IEMidiDeviceProfile& GetActiveMidiDeviceProfile();
-    IEMidiDeviceProfile& InitializeMidiDevice(const std::string& MidiDeviceName);
-    
-    bool IsMidiDeviceProfileActive(const IEMidiDeviceProfile& MidiDeviceProfile) const;
-    void ActivateMidiDeviceProfile(const IEMidiDeviceProfile& MidiDeviceProfile);
-    void DeactivateMidiDeviceProfile(const IEMidiDeviceProfile& MidiDeviceProfile);
-
-    bool IsMidiDevicePropertyActive(const IEMidiDeviceProperty& MidiDeviceProperty) const;
-    void ActivateMidiDeviceProperty(const IEMidiDeviceProperty& MidiDeviceProperty);
-    void DeactivateMidiDeviceProperty(const IEMidiDeviceProperty& MidiDeviceProperty);
 
 private:
     static void OnRtMidiCallback(double TimeStamp, std::vector<unsigned char>* Message, void* UserData);
@@ -53,8 +47,8 @@ private:
 
 private:
     std::optional<IEMidiDeviceProfile> m_ActiveMidiDeviceProfile;
-    std::unordered_set<IEMidiDeviceProperty, IEMidiDevicePropertyHash> m_ActiveMidiDeviceProperties;
 
+private:
     std::unique_ptr<IEAction_Volume> m_VolumeAction;
     std::unique_ptr<IEAction_Mute> m_MuteAction;
     std::unique_ptr<IEAction_ConsoleCommand> m_ConsoleCommandAction;
