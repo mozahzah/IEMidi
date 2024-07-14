@@ -14,13 +14,14 @@ int main()
     {
         if (ImGuiContext* const CreatedImGuiContext = ImGui::CreateContext())
         {
+            ImGuiIO& IO = ImGui::GetIO();
+            IO.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_IsSRGB | ImGuiConfigFlags_ViewportsEnable;
+            IO.IniFilename = nullptr;
+            IO.LogFilename = nullptr;
+
             if (Renderer.PostImGuiContextCreated())
             {
                 ImGui::StyleIE();
-                ImGuiIO& IO = ImGui::GetIO();
-                IO.IniFilename = nullptr;
-                IO.LogFilename = nullptr;
-
                 IEMidiApp.SetAppState(IEAppState::MidiDeviceSelection);
 
                 IEClock::time_point StartFrameTime = IEClock::now();
@@ -41,6 +42,11 @@ int main()
                         
                     ImGui::Render();
                     Renderer.RenderFrame(*ImGui::GetDrawData());
+                    if (IO.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+                    {
+                        ImGui::UpdatePlatformWindows();
+                        ImGui::RenderPlatformWindowsDefault();
+                    }
                     Renderer.PresentFrame();
 
                     IEMidiApp.OnPostFrameRender();

@@ -55,14 +55,14 @@ void IEMidi::DrawMidiDeviceSelectionWindow()
                                             ImGuiWindowFlags_NoMove |
                                             ImGuiWindowFlags_NoScrollbar |
                                             ImGuiWindowFlags_NoScrollWithMouse |
-                                            ImGuiWindowFlags_NoCollapse;
+                                            ImGuiWindowFlags_NoCollapse |
+                                            ImGuiWindowFlags_NoDocking;
 
-    ImGuiIO& IO = ImGui::GetIO();
-    const float WindowWidth = IO.DisplaySize.x * 0.2f;
-    const float WindowHeight = IO.DisplaySize.y * 0.5f;
-
-    const float WindowPosX = (IO.DisplaySize.x - WindowWidth) * 0.5f;
-    const float WindowPosY = (IO.DisplaySize.y - WindowHeight) * 0.5f;
+    ImGuiViewport& MainViewport = *ImGui::GetMainViewport();
+    const float WindowWidth = MainViewport.Size.x * 0.2f;
+    const float WindowHeight = MainViewport.Size.y * 0.5f;
+    const float WindowPosX = (MainViewport.Pos.x + (MainViewport.Size.x - WindowWidth) * 0.5f);
+    const float WindowPosY = (MainViewport.Pos.y + (MainViewport.Size.y - WindowHeight) * 0.5f);
 
     ImGui::SetNextWindowSize(ImVec2(WindowWidth, WindowHeight), ImGuiCond_Always);
     ImGui::SetNextWindowPos(ImVec2(WindowPosX, WindowPosY));
@@ -108,12 +108,12 @@ void IEMidi::DrawSelectedMidiDeviceEditorWindow()
     static constexpr uint32_t WindowFlags = ImGuiWindowFlags_NoResize |
                                             ImGuiWindowFlags_NoMove |
                                             ImGuiWindowFlags_NoCollapse |
-                                            ImGuiWindowFlags_NoTitleBar;
+                                            ImGuiWindowFlags_NoTitleBar |
+                                            ImGuiWindowFlags_NoDocking;
 
-
-    ImGuiIO& IO = ImGui::GetIO();
-    ImGui::SetNextWindowSize(ImVec2(IO.DisplaySize.x, IO.DisplaySize.y), ImGuiCond_Always);
-    ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f));
+    ImGuiViewport& MainViewport = *ImGui::GetMainViewport();
+    ImGui::SetNextWindowSize(ImVec2(MainViewport.Size.x, MainViewport.Size.y), ImGuiCond_Always);
+    ImGui::SetNextWindowPos(ImVec2(MainViewport.Pos.x, MainViewport.Pos.y));
 
     IEMidiProcessor& MidiProcessor = GetMidiProcessor();
     IEMidiDeviceProfile& ActiveMidiDeviceProfile = MidiProcessor.GetActiveMidiDeviceProfile();
@@ -126,7 +126,7 @@ void IEMidi::DrawSelectedMidiDeviceEditorWindow()
 
     static const char SaveAndClose[] = "Save & Close";
     const ImVec2 CloseSelectableSize = ImVec2(ImGui::CalcTextSize(SaveAndClose));
-    ImGui::SetCursorPos(ImVec2(IO.DisplaySize.x - CloseSelectableSize.x - 20.0f, IO.DisplaySize.y - CloseSelectableSize.y - 20.0f));
+    ImGui::SetCursorPos(ImVec2(MainViewport.Size.x - CloseSelectableSize.x - 20.0f, MainViewport.Size.y - CloseSelectableSize.y - 20.0f));
     if (ImGui::GreenButton(SaveAndClose))
     {
         if (GetMidiProfileManager().SaveProfile(ActiveMidiDeviceProfile))

@@ -10,8 +10,7 @@ namespace ImGui
     void StyleIE(ImGuiStyle* StyleDestination)
     {
         ImGuiIO& IO = ImGui::GetIO();
-        IO.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_IsSRGB;
-
+    
         const std::filesystem::path AppDirectory = IEUtils::FindFolderPathUpwards(std::filesystem::current_path(), "IEMidi");
 
         const std::filesystem::path ImGuiIniFilePath = AppDirectory / "Settings/IEMidi_ImGui.ini";
@@ -19,12 +18,12 @@ namespace ImGui
         ImGui::LoadIniSettingsFromDisk(ImGuiIniFilePathString.c_str());
         IO.IniFilename = ImGuiIniFilePathString.c_str();
 
-        const std::filesystem::path RobotoMonoFontPath = AppDirectory / "Resources/Fonts/Roboto_Mono/static/RobotoMono-SemiBold.ttf";
-        if (ImFont* const RobotoMonoFont = IO.Fonts->AddFontFromFileTTF(IEUtils::StringCast<char>(RobotoMonoFontPath.c_str()).c_str(), 30.0f))
+        const std::filesystem::path SpaceGroteskFontPath = AppDirectory / "Resources/Fonts/Space_Grotesk/static/SpaceGrotesk-Regular.ttf";
+        if (ImFont* const SpaceGroteskFont = IO.Fonts->AddFontFromFileTTF(IEUtils::StringCast<char>(SpaceGroteskFontPath.c_str()).c_str(), 30.0f))
         {
             IO.Fonts->Build();
             IO.FontGlobalScale = 0.7f;
-            IELOG_SUCCESS("Successfully loaded font (%s)", RobotoMonoFont->GetDebugName());
+            IELOG_SUCCESS("Successfully loaded font (%s)", SpaceGroteskFont->GetDebugName());
         }
 
         if (ImGuiStyle* const Style = StyleDestination ? StyleDestination : &ImGui::GetStyle())
