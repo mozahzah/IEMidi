@@ -42,8 +42,10 @@ public:
     void OnPreFrameRender();
     void OnPostFrameRender();
 
+private:
     void DrawMidiDeviceSelectionWindow();
     void DrawSelectedMidiDeviceEditorWindow();
+    void DrawSideBarWindow();
 
 private:
     static void OnAppWindowClosed(uint32_t WindowID, void* UserData);

@@ -23,12 +23,14 @@
 #include <cstdio>
 #include <cstring>
 #include <cwchar>
+#include <deque>
 #include <filesystem>
 #include <format>
 #include <functional>
 #include <locale>
 #include <memory>
 #include <optional>
+#include <queue>
 #include <set>
 #include <source_location>
 #include <stack>

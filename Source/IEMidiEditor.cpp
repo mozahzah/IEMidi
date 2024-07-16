@@ -10,14 +10,18 @@
 static constexpr size_t MidiDevicePropertyEditorColumnCount = 7;
 static constexpr size_t MidiDeviceInitialOutputMessageEditorColumnCount = 3;
 static constexpr float InputBoxSizeWidth = 150.0f;
-static constexpr float RecordButtonPosXScaleFactor = 0.6f;
-static constexpr float DeleteButtonPosXScaleFactor = 0.9f;
 
 void IEMidiEditor::DrawMidiDeviceProfileEditor(IEMidiDeviceProfile& MidiDeviceProfile) const
 {
-    const ImVec2 PlusButtonSize = ImVec2(ImGui::GetFontSize(), ImGui::GetFontSize() * 1.5f);
+    ImGui::PushFont(ImGui::IEStyle::GetTitleFont());
+    ImGui::WindowPositionedText(0.5f, 0.1f, "%s", MidiDeviceProfile.Name.c_str());
+    ImGui::PopFont();
 
-    ImGui::SeparatorText("Midi Input Editor");
+    ImGui::PushFont(ImGui::IEStyle::GetSubtitleFont());
+    ImGui::WindowPositionedText(0.02f, 0.2f, "Input Editor");
+    ImGui::PopFont();
+
+    ImGui::SetSmartCursorPosXRelative(0.02f);
     if (ImGui::BeginTable("Profile Midi Input Editor", 1))
     {
         for (std::vector<IEMidiDeviceProperty>::iterator It = MidiDeviceProfile.Properties.begin();
@@ -33,15 +37,21 @@ void IEMidiEditor::DrawMidiDeviceProfileEditor(IEMidiDeviceProfile& MidiDevicePr
         MidiDeviceProfile.Properties.shrink_to_fit();
 
         ImGui::TableNextColumn();
-        if (ImGui::Button("+", PlusButtonSize))
+        ImGui::PushFont(ImGui::IEStyle::GetSubtitleFont());
+        if (ImGui::IEStyle::SquareButton("+"))
         {
             MidiDeviceProfile.Properties.push_back(IEMidiDeviceProperty(MidiDeviceProfile.Name));
         }
+        ImGui::PopFont();
 
         ImGui::EndTable();
     }
 
-    ImGui::SeparatorText("Midi Output Editor");
+    ImGui::PushFont(ImGui::IEStyle::GetSubtitleFont());
+    ImGui::WindowPositionedText(0.02f, 0.6f, "Output Editor");
+    ImGui::PopFont();
+
+    ImGui::SetSmartCursorPosXRelative(0.02f);
     if (ImGui::BeginTable("Profile Output Midi Message Editor", 1))
     {
         for (std::vector<std::vector<unsigned char>>::iterator It = MidiDeviceProfile.InitialOutputMidiMessages.begin();
@@ -57,10 +67,12 @@ void IEMidiEditor::DrawMidiDeviceProfileEditor(IEMidiDeviceProfile& MidiDevicePr
         MidiDeviceProfile.InitialOutputMidiMessages.shrink_to_fit();
 
         ImGui::TableNextColumn();
-        if (ImGui::Button("+", PlusButtonSize))
+        ImGui::PushFont(ImGui::IEStyle::GetSubtitleFont());
+        if (ImGui::IEStyle::SquareButton("+"))
         {
             MidiDeviceProfile.InitialOutputMidiMessages.push_back(std::vector<unsigned char>(MIDI_MESSAGE_BYTE_COUNT));
         }
+        ImGui::PopFont();
 
         ImGui::EndTable();
     }
@@ -70,8 +82,6 @@ void IEMidiEditor::DrawMidiDevicePropertyEditor(IEMidiDeviceProperty& MidiDevice
 {
     if (ImGui::BeginTable("Midi Property Editor", MidiDevicePropertyEditorColumnCount, ImGuiTableFlags_Hideable | ImGuiTableFlags_SizingFixedFit))
     {
-        ImGuiIO& IO = ImGui::GetIO();
-
         static const char MessageTypesStringArray[static_cast<int>(IEMidiMessageType::Count)][std::size("-Select Message Type")] =
         {   "-Select Message Type",
             "NoteOnOff",
@@ -169,7 +179,7 @@ void IEMidiEditor::DrawMidiDevicePropertyEditor(IEMidiDeviceProperty& MidiDevice
         }
   
         ImGui::TableNextColumn();
-        ImGui::SetCursorPosX(IO.DisplaySize.x * RecordButtonPosXScaleFactor);
+        ImGui::SetSmartCursorPosXRelative(0.4f);
 
         ImGui::GetWindowDrawList()->ChannelsSplit(2);
         ImGui::GetWindowDrawList()->ChannelsSetCurrent(1);
@@ -185,7 +195,7 @@ void IEMidiEditor::DrawMidiDevicePropertyEditor(IEMidiDeviceProperty& MidiDevice
             ImGui::Text("Recording not available");
         }
         ImGui::GetWindowDrawList()->ChannelsSetCurrent(0);
-        ImGui::GetWindowDrawList()->AddRectFilled(ImGui::GetItemRectMin(), ImGui::GetItemRectMax(), IM_COL32(255, 0, 0, 100));
+        ImGui::GetWindowDrawList()->AddRectFilled(ImGui::GetItemRectMin(), ImGui::GetItemRectMax(), IM_COL32(255, 0, 0, 50));
         ImGui::GetWindowDrawList()->ChannelsMerge();
 
         ImGui::TableNextColumn();
@@ -196,8 +206,10 @@ void IEMidiEditor::DrawMidiDevicePropertyEditor(IEMidiDeviceProperty& MidiDevice
         std::copy(MidiMessageBuf.begin(), MidiMessageBuf.end(), MidiDeviceProperty.MidiMessage.begin());
 
         ImGui::TableNextColumn();
-        ImGui::SetCursorPosX(IO.DisplaySize.x * DeleteButtonPosXScaleFactor);
-        bDeleteRequested = ImGui::RedButton("Delete");
+        static const char Delete[] = "Delete";
+        const ImVec2 DeleteSelectableSize = ImVec2(ImGui::CalcTextSize(Delete));
+        ImGui::SetSmartCursorPosX(ImGui::GetWindowSize().x - DeleteSelectableSize.x - 40.0f);
+        bDeleteRequested = ImGui::IEStyle::RedButton(Delete);
 
         ImGui::EndTable();
     }
@@ -207,8 +219,6 @@ void IEMidiEditor::DrawInitialOutputMessageEditor(std::vector<unsigned char>& Mi
 {
     if (ImGui::BeginTable("Profile Midi Output Editor", MidiDeviceInitialOutputMessageEditorColumnCount, ImGuiTableFlags_SizingFixedFit))
     {
-        ImGuiIO& IO = ImGui::GetIO();
-
         ImGui::TableNextColumn();
         if (ImGui::Button("Send Midi Out"))
         {
@@ -223,8 +233,10 @@ void IEMidiEditor::DrawInitialOutputMessageEditor(std::vector<unsigned char>& Mi
         std::copy(InitialOutputMidiMessageBuf.begin(), InitialOutputMidiMessageBuf.end(), MidiDeviceInitialOutputMidiMessage.begin());
 
         ImGui::TableNextColumn();
-        ImGui::SetCursorPos(ImVec2(IO.DisplaySize.x * DeleteButtonPosXScaleFactor, ImGui::GetCursorPosY()));
-        bDeleteRequested = ImGui::RedButton("Delete");
+        static const char Delete[] = "Delete";
+        const ImVec2 DeleteSelectableSize = ImVec2(ImGui::CalcTextSize(Delete));
+        ImGui::SetSmartCursorPosX(ImGui::GetWindowSize().x - DeleteSelectableSize.x - 40.0f);
+        bDeleteRequested = ImGui::IEStyle::RedButton(Delete);
 
         ImGui::EndTable();
     }

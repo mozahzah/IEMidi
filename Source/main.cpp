@@ -16,12 +16,12 @@ int main()
         {
             ImGuiIO& IO = ImGui::GetIO();
             IO.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_IsSRGB | ImGuiConfigFlags_ViewportsEnable;
-            IO.IniFilename = nullptr;
-            IO.LogFilename = nullptr;
-
             if (Renderer.PostImGuiContextCreated())
             {
-                ImGui::StyleIE();
+                ImGui::IEStyle::StyleIE();
+                IO.IniFilename = nullptr;
+                IO.LogFilename = nullptr;
+
                 IEMidiApp.SetAppState(IEAppState::MidiDeviceSelection);
 
                 IEClock::time_point StartFrameTime = IEClock::now();
@@ -35,10 +35,7 @@ int main()
                     Renderer.NewFrame();
                     ImGui::NewFrame();
 
-                    //ImGui::ShowDemoWindow();
                     IEMidiApp.OnPreFrameRender();
-
-                    Renderer.DrawTelemetry();
                         
                     ImGui::Render();
                     Renderer.RenderFrame(*ImGui::GetDrawData());

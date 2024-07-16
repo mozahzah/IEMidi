@@ -12,6 +12,7 @@ public:
     IEMidiProfileManager();
     
 public:
+    std::filesystem::path GetIEMidiProfilesFilePath() const;
     bool HasProfile(const IEMidiDeviceProfile& MidiDeviceProfile) const;
     IEResult SaveProfile(const IEMidiDeviceProfile& MidiDeviceProfile) const;
     IEResult LoadProfile(IEMidiDeviceProfile& MidiDeviceProfile) const;

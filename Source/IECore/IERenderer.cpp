@@ -9,8 +9,10 @@
 
 #if defined (_WIN32)
 extern void InitializeIEWin32App(IERenderer* Renderer);
+extern void ShowRunningInBackgroundWin32Notification(const IERenderer* Renderer);
 #elif defined (__APPLE__)
-extern "C" void InitializeIEAppleApp(IERenderer* Renderer);
+extern "C" void InitializeIEAppleApp(IERenderer * Renderer);
+extern "C" void ShowRunningInBackgroundAppleNotification(const IERenderer* Renderer);
 #endif
 
 void IERenderer::PostWindowCreated()
@@ -52,7 +54,7 @@ void IERenderer::RequestExit()
 
 void IERenderer::WaitEvents() const
 {
-    glfwWaitEvents();
+    glfwWaitEventsTimeout(0.1f); //10fps
 }
 
 void IERenderer::PollEvents() const
@@ -99,6 +101,12 @@ void IERenderer::CloseAppWindow() const
     {
         glfwSetWindowShouldClose(m_AppWindow, GLFW_TRUE);
         glfwHideWindow(m_AppWindow);
+
+#if defined (_WIN32)
+    ShowRunningInBackgroundWin32Notification(this);
+#elif defined (__APPLE__)
+    ShowRunningInBackgroundAppleNotification(this);
+#endif
 
         BroadcastOnWindowClosed();
     }
@@ -166,8 +174,9 @@ void IERenderer::DrawTelemetry() const
                                     ImGuiWindowFlags_NoScrollWithMouse |
                                     ImGuiWindowFlags_NoCollapse |
                                     ImGuiWindowFlags_NoMouseInputs;
-                                    
-    ImGui::SetNextWindowPos(ImVec2(0.0f, IO.DisplaySize.y - ImGui::GetFrameHeightWithSpacing()));
+
+    ImGuiViewport& MainViewport = *ImGui::GetMainViewport();
+    ImGui::SetNextWindowPos(ImVec2(MainViewport.Pos.x, MainViewport.Pos.y + MainViewport.Size.y - ImGui::GetFrameHeightWithSpacing() - ImGui::GetStyle().WindowPadding.y));
     ImGui::Begin("Telemetry", nullptr, TelemetryWindowFlags);
     ImGui::Text("Frame Duration (ms): %.2f | FPS: %.0f", 1000.0f / IO.Framerate, IO.Framerate);
     ImGui::End();

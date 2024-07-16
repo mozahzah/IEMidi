@@ -164,9 +164,8 @@ std::vector<std::string> IEMidiProcessor::GetAvailableMidiDevices() const
     RtMidiIn& MidiIn = GetMidiIn();
     for (int InputPortNumber = 0; InputPortNumber < MidiIn.getPortCount(); InputPortNumber++)
     {
-        const std::string MidiDeviceName = MidiIn.getPortName(InputPortNumber);
-        AvailableMidiDevices.emplace_back(MidiDeviceName.substr(0,
-            MidiDeviceName.length() - (std::to_string(InputPortNumber).length() + 1)));
+        const std::string MidiDeviceName = GetSanitizedMidiDeviceName(MidiIn.getPortName(InputPortNumber), InputPortNumber);
+        AvailableMidiDevices.emplace_back(MidiDeviceName);
     }
     return AvailableMidiDevices;
 }
@@ -182,19 +181,28 @@ IEMidiDeviceProfile& IEMidiProcessor::GetActiveMidiDeviceProfile()
     return m_ActiveMidiDeviceProfile.value();
 }
 
+const IEMidiDeviceProfile& IEMidiProcessor::GetActiveMidiDeviceProfile() const
+{
+    if (!m_ActiveMidiDeviceProfile.has_value())
+    {
+        IELOG_ERROR("No active midi device profile");
+        abort();
+    }
+
+    return m_ActiveMidiDeviceProfile.value();
+}
+
 void IEMidiProcessor::ActivateMidiDeviceProfile(const std::string& MidiDeviceName)
 {
     RtMidiIn& MidiIn = GetMidiIn();
     for (int InputPortNumber = 0; InputPortNumber < MidiIn.getPortCount(); InputPortNumber++)
     {
-        const std::string MidiDeviceName = MidiIn.getPortName(InputPortNumber);
+        const std::string MidiDeviceName = GetSanitizedMidiDeviceName(MidiIn.getPortName(InputPortNumber), InputPortNumber);
 
         RtMidiOut& MidiOut = GetMidiOut();
         for (int OutputPortNumber = 0; OutputPortNumber < MidiOut.getPortCount(); OutputPortNumber++)
         {
-            if (MidiOut.getPortName(OutputPortNumber).find(MidiDeviceName) != std::string::npos ||
-                MidiOut.getPortName(OutputPortNumber).find(MidiDeviceName.substr(0, MidiDeviceName.length() -
-                (std::to_string(OutputPortNumber).length() + 1))) != std::string::npos)
+            if (MidiOut.getPortName(OutputPortNumber).find(MidiDeviceName) != std::string::npos)
             {
                 m_ActiveMidiDeviceProfile = IEMidiDeviceProfile(MidiDeviceName, InputPortNumber, OutputPortNumber);
 
@@ -249,7 +257,13 @@ void IEMidiProcessor::OnRtMidiCallback(double TimeStamp, std::vector<unsigned ch
                     }
                 }
             }
-            
+
+            if (MidiProcessor->m_IncomingMidiMessages.size() == INCOMING_MIDI_MESSAGES_SIZE)
+            {
+                MidiProcessor->m_IncomingMidiMessages.pop_back();
+            }
+
+            MidiProcessor->m_IncomingMidiMessages.push_front(MidiMessage);
             MidiProcessor->ProcessMidiInputMessage(MidiMessage);
         }
     }
@@ -258,4 +272,17 @@ void IEMidiProcessor::OnRtMidiCallback(double TimeStamp, std::vector<unsigned ch
 void IEMidiProcessor::OnRtMidiErrorCallback(RtMidiError::Type RtMidiErrorType, const std::string& ErrorText, void* UserData)
 {
     IELOG_ERROR("%s", ErrorText.c_str());
+}
+
+std::string IEMidiProcessor::GetSanitizedMidiDeviceName(const std::string& MidiDeviceName, uint32_t InputPortNumber) const
+{
+    std::string SanitizedMidiDeviceName = MidiDeviceName;
+
+    const std::string NumericSuffix = std::to_string(InputPortNumber);
+    const size_t NumericSuffixIndex = MidiDeviceName.find(NumericSuffix);
+    if (NumericSuffixIndex != std::string::npos)
+    {
+        SanitizedMidiDeviceName.erase(NumericSuffixIndex - 1, NumericSuffix.length() + 1);
+    }
+    return SanitizedMidiDeviceName;
 }
