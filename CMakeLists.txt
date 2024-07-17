@@ -73,10 +73,18 @@ include_directories("${STB_DIR}")
 begin_section_message("Adding executable and finalizing library linking")
 file(GLOB_RECURSE SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/Source/*.cpp")
 
+message("Adding additional source files and variables for ${CMAKE_SYSTEM_NAME}")
 if(CMAKE_SYSTEM_NAME MATCHES "Windows")
-  # Specific windows source files can be appended here
+  # Specific windows source files and variables can be appended here
 elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
-  message("Adding additional source files for ${CMAKE_SYSTEM_NAME}")
+  set(MACOSX_BUNDLE TRUE)
+  set(MACOSX_BUNDLE_BUNDLE_NAME "IEMidi")
+  set(MACOSX_BUNDLE_GUI_IDENTIFIER "com.IE.IEMidi")
+  set(MACOSX_BUNDLE_BUNDLE_VERSION "1.0.0")
+  set(MACOSX_BUNDLE_SHORT_VERSION_STRING "1.0")
+  set(CODE_SIGN_IDENTITY "Incus Entertainment")
+  set(CMAKE_XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "Incus Entertainment")
+
   file(GLOB_RECURSE ADD_SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/Source/*.mm")
   list(APPEND SOURCE_FILES ${ADD_SOURCE_FILES})
 endif()
@@ -94,8 +102,17 @@ if(CMAKE_SYSTEM_NAME MATCHES "Windows")
 elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
   target_link_libraries(LIEMidi PUBLIC ${COREAUDIO_LIBRARY})
   target_link_libraries(LIEMidi PUBLIC "-framework Cocoa")
+  target_link_libraries(LIEMidi PUBLIC "-framework UserNotifications")
 endif()
 
-add_executable(IEMidi Source/main.cpp)
+if(CMAKE_SYSTEM_NAME MATCHES "Windows")
+  add_executable(IEMidi Source/main.cpp)
+elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
+  add_executable(IEMidi MACOSX_BUNDLE Source/main.cpp)
+  add_custom_command(TARGET IEMidi POST_BUILD
+    COMMAND codesign --force --deep -s "-" $<TARGET_BUNDLE_DIR:IEMidi>
+    COMMAND codesign --verify --verbose $<TARGET_BUNDLE_DIR:IEMidi>)
+endif()
+
 target_link_libraries(IEMidi PUBLIC LIEMidi)
 begin_section_message("Finished Setting IEMidi")

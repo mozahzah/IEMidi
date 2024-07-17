@@ -49,7 +49,14 @@ int main()
                     IEMidiApp.OnPostFrameRender();
 
                     CapturedDeltaTime = std::chrono::duration_cast<IEDurationMs>(IEClock::now() - StartFrameTime);
-                    Renderer.WaitEvents();
+                    if (Renderer.IsAppWindowOpen())
+                    {
+                        Renderer.WaitEventsTimeout(0.1f);
+                    }
+                    else
+                    {
+                        Renderer.WaitEvents();
+                    }
                 }
             }
         }

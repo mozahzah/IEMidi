@@ -54,7 +54,12 @@ void IERenderer::RequestExit()
 
 void IERenderer::WaitEvents() const
 {
-    glfwWaitEventsTimeout(0.1f); //10fps
+    glfwWaitEvents();
+}
+
+void IERenderer::WaitEventsTimeout(double Timeout) const
+{
+    glfwWaitEventsTimeout(Timeout);
 }
 
 void IERenderer::PollEvents() const
@@ -99,14 +104,14 @@ void IERenderer::CloseAppWindow() const
 {
     if (m_AppWindow)
     {
+#if defined (_WIN32)
+        ShowRunningInBackgroundWin32Notification(this);
+#elif defined (__APPLE__)
+        ShowRunningInBackgroundAppleNotification(this);
+#endif
+    
         glfwSetWindowShouldClose(m_AppWindow, GLFW_TRUE);
         glfwHideWindow(m_AppWindow);
-
-#if defined (_WIN32)
-    ShowRunningInBackgroundWin32Notification(this);
-#elif defined (__APPLE__)
-    ShowRunningInBackgroundAppleNotification(this);
-#endif
 
         BroadcastOnWindowClosed();
     }

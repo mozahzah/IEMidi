@@ -70,7 +70,7 @@ namespace ImGui
         TextPositionY = std::fabs(TextPositionY - 0.0f) <= std::numeric_limits<float>::epsilon() ? ImGui::GetCursorPosY() : TextPositionY;
 
         ImGui::SetSmartCursorPos(ImVec2(TextPositionX, TextPositionY));
-        ImGui::Text(Buffer);
+        ImGui::Text("%s", Buffer);
     }
     
     void WindowPositionedText(float XMultiplier, float YMultiplier, const char* Fmt, ...)

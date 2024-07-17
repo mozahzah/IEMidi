@@ -5,10 +5,11 @@
 #if defined (__APPLE__)
 
 #import <Cocoa/Cocoa.h>
+#import <UserNotifications/UserNotifications.h>
 
 @interface IEAppleStatusItem : NSObject<NSApplicationDelegate>
-@property IERenderer* Renderer;
-@property (strong, nonatomic) NSStatusItem* StatusItem;
+@property IERenderer* renderer;
+@property (strong, nonatomic) NSStatusItem* statusItem;
 @end
 
 @implementation IEAppleStatusItem
@@ -17,7 +18,7 @@
     self = [super init];
     if (self) 
     {
-        self.Renderer = Renderer;
+        self.renderer = Renderer;
         [self createStatusBarIcon];
     }    
     return self;
@@ -25,20 +26,20 @@
 
 - (void)createStatusBarIcon
 {
-    NSStatusBar* StatusBar = [NSStatusBar systemStatusBar];
-    self.StatusItem = [StatusBar statusItemWithLength:NSSquareStatusItemLength];
-    if (self.StatusItem && self.Renderer)
+    NSStatusBar* statusBar = [NSStatusBar systemStatusBar];
+    self.statusItem = [statusBar statusItemWithLength:NSSquareStatusItemLength];
+    if (self.statusItem && self.renderer)
     {
-        NSString* LogoFilePath = [NSString stringWithUTF8String:self.Renderer->GetIEIconPathString().c_str()];
-        NSImage* Icon = [[NSImage alloc] initWithContentsOfFile:LogoFilePath];
-        if (Icon)
+        NSString* logoFilePath = [NSString stringWithUTF8String:self.renderer->GetIEIconPathString().c_str()];
+        NSImage* icon = [[NSImage alloc] initWithContentsOfFile:logoFilePath];
+        if (icon)
         {
-            [Icon setSize:NSMakeSize([StatusBar thickness] - 5, [StatusBar thickness] - 5)];
-            [self.StatusItem button].image = Icon;
+            [icon setSize:NSMakeSize([statusBar thickness] - 5, [statusBar thickness] - 5)];
+            [self.statusItem button].image = icon;
                 
-            NSMenu* MenuItem = [[NSMenu alloc] initWithTitle:@"IEMidi"];
-            [MenuItem setMinimumWidth:200];
-            [MenuItem setAutoenablesItems:NO];
+            NSMenu* menuItem = [[NSMenu alloc] initWithTitle:@"IEMidi"];
+            [menuItem setMinimumWidth:200];
+            [menuItem setAutoenablesItems:NO];
 
             NSView *menuTitleView = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, 200, 30)];
             NSTextField *menuTitleLabel = [[NSTextField alloc] initWithFrame:NSMakeRect(10, 0, 190, 20)];
@@ -53,7 +54,7 @@
             
             NSMenuItem* titleMenuItem = [[NSMenuItem alloc] initWithTitle:@"IEMidi" action:nil keyEquivalent:@""];
             [titleMenuItem setView:menuTitleView];
-            [MenuItem addItem:titleMenuItem];
+            [menuItem addItem:titleMenuItem];
 
             NSMenuItem *subTitleMenuItem = [[NSMenuItem alloc] init];
             [subTitleMenuItem setEnabled:NO];
@@ -61,42 +62,101 @@
             NSDictionary *subTitleAttributes = @{NSFontAttributeName: subTitleFont};
             NSAttributedString *subTitleAttribute = [[NSAttributedString alloc] initWithString:@"App State: Running" attributes:subTitleAttributes];
             subTitleMenuItem.attributedTitle = subTitleAttribute;
-            [MenuItem addItem:subTitleMenuItem];
+            [menuItem addItem:subTitleMenuItem];
 
-            [MenuItem addItem:[NSMenuItem separatorItem]];
+            [menuItem addItem:[NSMenuItem separatorItem]];
             
             NSMenuItem* editMenuItem = [[NSMenuItem alloc] initWithTitle:@"Edit" action:@selector(edit:) keyEquivalent:@""];
             [editMenuItem setTarget:self];
-            [MenuItem addItem:editMenuItem];
+            [menuItem addItem:editMenuItem];
 
             NSMenuItem* quitMenuItem = [[NSMenuItem alloc] initWithTitle:@"Quit" action:@selector(quit:) keyEquivalent:@""];
             [quitMenuItem setTarget:self];
-            [MenuItem addItem:quitMenuItem];
+            [menuItem addItem:quitMenuItem];
 
-            [self.StatusItem setMenu:MenuItem];
+            [self.statusItem setMenu:menuItem];
         }
     }
 }
 
 - (void)edit:(id)sender
 {
-    if (self.Renderer)
+    if (self.renderer)
     {
-        self.Renderer->RestoreAppWindow();
+        self.renderer->RestoreAppWindow();
     }
 }
 
 - (void)quit:(id)sender
 {
-    if (self.Renderer)
+    if (self.renderer)
     {
-        self.Renderer->RequestExit();
+        self.renderer->RequestExit();
     }
 }
 @end
 
-extern "C" void InitializeIEAppleApp(IERenderer* Renderer)
+@interface IEAppleNotificationDelegate : NSObject <UNUserNotificationCenterDelegate>
+@end
+
+@implementation IEAppleNotificationDelegate
+- (instancetype)init
 {
-    IEAppleStatusItem* IEStatusItem = [[IEAppleStatusItem alloc] initWithRenderer:Renderer];
+    self = [super init];
+    if (self)
+    {
+        UNUserNotificationCenter* notificationCenter = [UNUserNotificationCenter currentNotificationCenter];
+        notificationCenter.delegate = self;
+
+        [notificationCenter requestAuthorizationWithOptions : (UNAuthorizationOptionAlert | UNAuthorizationOptionSound | UNAuthorizationOptionBadge)
+            completionHandler : ^ (BOOL granted, NSError * _Nullable error)
+        {
+            if (!granted)
+            {
+                NSLog(@"Notification permission not granted: %@", error.localizedDescription);
+            }
+        }];
+    }
+    return self;
+}
+
+- (void)userNotificationCenter:(UNUserNotificationCenter *)center
+       willPresentNotification:(UNNotification *)notification
+    withCompletionHandler : (void(^)(UNNotificationPresentationOptions options))completionHandler
+    {
+        completionHandler(UNNotificationPresentationOptionBadge | UNNotificationPresentationOptionBanner | UNNotificationPresentationOptionSound);
+    }
+@end
+
+/* EXTERN C Code */
+
+extern "C" void InitializeIEAppleApp(IERenderer * Renderer)
+{
+    IEAppleStatusItem* IEStatusItem = [[IEAppleStatusItem alloc]initWithRenderer:Renderer];
+    IEAppleNotificationDelegate *IENotificationDelegate = [[IEAppleNotificationDelegate alloc] init];
+}
+
+extern "C" void ShowRunningInBackgroundAppleNotification(IERenderer * Renderer)
+{
+    UNMutableNotificationContent *content = [[UNMutableNotificationContent alloc] init];
+    content.title = @"IEMidi";
+    content.body = @"IEMidi is running in the background";
+    content.sound = [UNNotificationSound soundNamed:@"Purr"];
+
+    NSString* uniqueIdentifier = [[NSUUID UUID]UUIDString];
+    UNNotificationRequest* request = [UNNotificationRequest requestWithIdentifier : uniqueIdentifier
+        content:content trigger:nil];
+
+    [[UNUserNotificationCenter currentNotificationCenter]addNotificationRequest:request withCompletionHandler : ^ (NSError * _Nullable error)
+    {
+        if (error != nil)
+        {
+            NSLog(@"Error adding notification: %@", error.localizedDescription);
+        }
+        else
+        {
+            NSLog(@"Notification added successfully %@", uniqueIdentifier);
+        }
+    }];
 }
 #endif

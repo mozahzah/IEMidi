@@ -39,6 +39,7 @@ public:
     void RequestExit();
 
     void WaitEvents() const;
+    void WaitEventsTimeout(double Timeout) const;
     void PollEvents() const;
     void PostEmptyEvent() const;
 

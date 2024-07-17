@@ -119,7 +119,7 @@ extern void ShowRunningInBackgroundWin32Notification(const IERenderer* Renderer)
         NotificationBalloonData.dwInfoFlags = NIIF_INFO;
         NotificationBalloonData.hIcon = reinterpret_cast<HICON>(SendMessage(Win32Window, WM_GETICON, ICON_SMALL, 0));
         lstrcpy(NotificationBalloonData.szTip, TEXT("IEMidi"));
-        lstrcpy(NotificationBalloonData.szInfo, TEXT("IE Midi is running in the background"));
+        lstrcpy(NotificationBalloonData.szInfo, TEXT("IEMidi is running in the background"));
         
         Shell_NotifyIcon(NIM_ADD, &NotificationBalloonData);
         Shell_NotifyIcon(NIM_DELETE, &NotificationBalloonData);
