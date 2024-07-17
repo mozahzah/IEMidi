@@ -192,8 +192,11 @@ const IEMidiDeviceProfile& IEMidiProcessor::GetActiveMidiDeviceProfile() const
     return m_ActiveMidiDeviceProfile.value();
 }
 
-void IEMidiProcessor::ActivateMidiDeviceProfile(const std::string& MidiDeviceName)
+IEResult IEMidiProcessor::ActivateMidiDeviceProfile(const std::string& MidiDeviceName)
 {
+    IEResult Result(IEResult::Type::Fail);
+    Result.Message = std::format("Failed to activate midi device profile {}", MidiDeviceName);
+
     RtMidiIn& MidiIn = GetMidiIn();
     for (int InputPortNumber = 0; InputPortNumber < MidiIn.getPortCount(); InputPortNumber++)
     {
@@ -215,10 +218,16 @@ void IEMidiProcessor::ActivateMidiDeviceProfile(const std::string& MidiDeviceNam
                 }
 
                 MidiIn.setCallback(&IEMidiProcessor::OnRtMidiCallback, this);
+
+                Result.Type = IEResult::Type::Success;
+                Result.Message = std::format("Successfully activated midi device profile {}", MidiDeviceName);
+
                 break;
             }
         }
-    }     
+    }
+    
+    return Result;
 }
 
 void IEMidiProcessor::DeactivateMidiDeviceProfile()

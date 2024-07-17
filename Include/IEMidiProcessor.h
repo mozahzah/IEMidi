@@ -36,7 +36,7 @@ public:
     IEResult SendMidiOutputMessage(const std::vector<unsigned char>& MidiMessage);
 
     std::vector<std::string> GetAvailableMidiDevices() const;
-    void ActivateMidiDeviceProfile(const std::string& MidiDeviceName);
+    IEResult ActivateMidiDeviceProfile(const std::string& MidiDeviceName);
     void DeactivateMidiDeviceProfile();
     IEMidiDeviceProfile& GetActiveMidiDeviceProfile();
     const IEMidiDeviceProfile& GetActiveMidiDeviceProfile() const;

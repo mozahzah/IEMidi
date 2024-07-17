@@ -87,11 +87,11 @@ public:
     IEResult(IEResult&& other) = default;
 
 #if ENABLE_IE_RESULT_LOGGING
-    explicit IEResult(const IEResult::Type& _Type = Type::Unknown, const char* _Message = nullptr, const std::source_location& CallerContext = std::source_location::current())
+    explicit IEResult(const IEResult::Type& _Type = Type::Unknown, const std::string _Message = std::string(), const std::source_location& CallerContext = std::source_location::current())
         : Type(_Type), Message(_Message), CallerContextFuncName(CallerContext.function_name())
     {}
 #else
-    explicit IEResult(const IEResult::Type& _Type, const char* _Message = nullptr)
+    explicit IEResult(const IEResult::Type& _Type, const std::string _Message = std::string())
         : Type(_Type)
     {}
 #endif

@@ -83,10 +83,18 @@ void IEMidi::DrawMidiDeviceSelectionWindow()
         ImGui::SetSmartCursorPosX(WindowWidth * 0.5f - ImGui::IEStyle::GetDefaultButtonSize().x - 2.0f);
         if (ImGui::IEStyle::DefaultButton(ActivateText))
         {
-            MidiProcessor.ActivateMidiDeviceProfile(MidiDeviceName);
-            GetMidiProfileManager().LoadProfile(MidiProcessor.GetActiveMidiDeviceProfile());
-            GetRenderer().CloseAppWindow();
-            break;
+            if (MidiProcessor.ActivateMidiDeviceProfile(MidiDeviceName))
+            {
+                IEMidiDeviceProfile& ActiveMidiDeviceProfile = MidiProcessor.GetActiveMidiDeviceProfile();
+                GetMidiProfileManager().LoadProfile(ActiveMidiDeviceProfile);
+                for (const std::vector<unsigned char>& MidiMessage : ActiveMidiDeviceProfile.InitialOutputMidiMessages)
+                {
+                    MidiProcessor.SendMidiOutputMessage(MidiMessage);
+                }
+                
+                GetRenderer().CloseAppWindow();
+                break;
+            }
         }
 
         ImGui::SameLine();
@@ -95,10 +103,18 @@ void IEMidi::DrawMidiDeviceSelectionWindow()
         ImGui::SetSmartCursorPosX(WindowWidth * 0.5f + 2.0f);
         if (ImGui::IEStyle::DefaultButton(EditText))
         {
-            MidiProcessor.ActivateMidiDeviceProfile(MidiDeviceName);
-            GetMidiProfileManager().LoadProfile(MidiProcessor.GetActiveMidiDeviceProfile());
-            SetAppState(IEAppState::MidiDeviceEditor);
-            break;
+            if (MidiProcessor.ActivateMidiDeviceProfile(MidiDeviceName))
+            {
+                IEMidiDeviceProfile& ActiveMidiDeviceProfile = MidiProcessor.GetActiveMidiDeviceProfile();
+                GetMidiProfileManager().LoadProfile(ActiveMidiDeviceProfile);
+                for (const std::vector<unsigned char>& MidiMessage : ActiveMidiDeviceProfile.InitialOutputMidiMessages)
+                {
+                    MidiProcessor.SendMidiOutputMessage(MidiMessage);
+                }
+
+                SetAppState(IEAppState::MidiDeviceEditor);
+                break;
+            }
         }
 
         ImGui::NewLine();
