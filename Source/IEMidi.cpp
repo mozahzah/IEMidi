@@ -133,7 +133,7 @@ void IEMidi::DrawSelectedMidiDeviceEditorWindow()
                                             ImGuiWindowFlags_NoDocking;
 
     ImGuiViewport& MainViewport = *ImGui::GetMainViewport();
-    const float WindowWidth = MainViewport.Size.x * 0.8f;
+    const float WindowWidth = MainViewport.Size.x * 0.7f;
     const float WindowHeight = MainViewport.Size.y;
     const float WindowPosX = (MainViewport.Pos.x + MainViewport.Size.x - WindowWidth);
     const float WindowPosY = MainViewport.Pos.y;
@@ -174,7 +174,7 @@ void IEMidi::DrawSideBarWindow()
                                             ImGuiWindowFlags_NoDocking;
 
     ImGuiViewport& MainViewport = *ImGui::GetMainViewport();
-    const float WindowWidth = MainViewport.Size.x * 0.2f;
+    const float WindowWidth = MainViewport.Size.x * 0.3f;
     const float WindowHeight = MainViewport.Size.y;
     const float WindowPosX = MainViewport.Pos.x;
     const float WindowPosY = MainViewport.Pos.y;
@@ -195,17 +195,17 @@ void IEMidi::DrawSideBarWindow()
 
     ImGui::SetSmartCursorPosYRelative(0.06f);
     static const int MidiDeviceInfoColumnsNum = 2;
-    const float MidiDeviceInfoColumnWidth = WindowWidth / 3.0f;
+    const float MidiDeviceInfoColumnWidth = WindowWidth / 2.75f;
     const float MidiDeviceInfoTableWidth = MidiDeviceInfoColumnsNum * MidiDeviceInfoColumnWidth;
     const float MidiDeviceInfoTableStartCursor = WindowWidth - MidiDeviceInfoTableWidth;
 
     ImGui::SetSmartCursorPosX(MidiDeviceInfoTableStartCursor * 0.4f);
 
     ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.650f, 0.765f, 1.000f, 0.900f));
-    if (ImGui::BeginTable("##MidiDeviceInfoTable", MidiDeviceInfoColumnsNum, ImGuiTableFlags_SizingStretchSame | ImGuiTableFlags_NoHostExtendX))
+    if (ImGui::BeginTable("##MidiDeviceInfoTable", MidiDeviceInfoColumnsNum, ImGuiTableFlags_SizingFixedSame | ImGuiTableFlags_NoHostExtendX))
     {
-        ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_WidthStretch, MidiDeviceInfoColumnWidth);
-        ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch, MidiDeviceInfoColumnWidth);
+        ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_WidthFixed, MidiDeviceInfoColumnWidth);
+        ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthFixed, MidiDeviceInfoColumnWidth);
         ImGui::TableNextRow();
 
         ImGui::TableNextColumn();
@@ -213,7 +213,7 @@ void IEMidi::DrawSideBarWindow()
         ImGui::Text("Name:");
         ImGui::PopFont();
         ImGui::TableNextColumn();
-        ImGui::Text("%s", MidiProcessor.GetActiveMidiDeviceProfile().Name.c_str());
+        ImGui::Text("%s", MidiProcessor.HasActiveMidiDeviceProfile() ? MidiProcessor.GetActiveMidiDeviceProfile().Name.c_str() : "No Active Midi Profile");
         ImGui::NewLine();
 
         ImGui::TableNextColumn();
@@ -221,14 +221,16 @@ void IEMidi::DrawSideBarWindow()
         ImGui::Text("Input Port:");
         ImGui::PopFont();
         ImGui::TableNextColumn();
-        ImGui::Text("%d", MidiProcessor.GetActiveMidiDeviceProfile().GetInputPortNumber());
-        
+        ImGui::Text("%s", MidiProcessor.HasActiveMidiDeviceProfile() ?
+            std::to_string(MidiProcessor.GetActiveMidiDeviceProfile().GetInputPortNumber()).c_str() : "No Active Midi Profile");
+
         ImGui::TableNextColumn();
         ImGui::PushFont(ImGui::IEStyle::GetBoldFont());
         ImGui::Text("Output Port:");
         ImGui::PopFont();
         ImGui::TableNextColumn();
-        ImGui::Text("%d", MidiProcessor.GetActiveMidiDeviceProfile().GetOutputPortNumber());
+        ImGui::Text("%s", MidiProcessor.HasActiveMidiDeviceProfile() ?
+            std::to_string(MidiProcessor.GetActiveMidiDeviceProfile().GetOutputPortNumber()).c_str() : "No Active Midi Profile");
         ImGui::NewLine();
 
         ImGui::TableNextColumn();
@@ -236,7 +238,7 @@ void IEMidi::DrawSideBarWindow()
         ImGui::Text("Current API:");
         ImGui::PopFont();
         ImGui::TableNextColumn();
-        ImGui::Text("%s", MidiIn.getApiDisplayName(MidiIn.getCurrentApi()).c_str());
+        ImGui::TextWrapped("%s", MidiIn.getApiDisplayName(MidiIn.getCurrentApi()).c_str());
 
         ImGui::TableNextColumn();
         ImGui::PushFont(ImGui::IEStyle::GetBoldFont());

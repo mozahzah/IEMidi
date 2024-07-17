@@ -248,6 +248,11 @@ void IEMidiProcessor::DeactivateMidiDeviceProfile()
     m_ActiveMidiDeviceProfile.reset();
 }
 
+bool IEMidiProcessor::HasActiveMidiDeviceProfile() const
+{
+    return m_ActiveMidiDeviceProfile.has_value();
+}
+
 void IEMidiProcessor::OnRtMidiCallback(double TimeStamp, std::vector<unsigned char>* Message, void* UserData)
 {
     if (Message && UserData)

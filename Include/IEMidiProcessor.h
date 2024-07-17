@@ -38,6 +38,7 @@ public:
     std::vector<std::string> GetAvailableMidiDevices() const;
     IEResult ActivateMidiDeviceProfile(const std::string& MidiDeviceName);
     void DeactivateMidiDeviceProfile();
+    bool HasActiveMidiDeviceProfile() const;
     IEMidiDeviceProfile& GetActiveMidiDeviceProfile();
     const IEMidiDeviceProfile& GetActiveMidiDeviceProfile() const;
     const std::deque<std::vector<unsigned char>>& GetIncomingMidiMessages() const { return m_IncomingMidiMessages; }
