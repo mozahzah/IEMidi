@@ -106,7 +106,8 @@ elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
 endif()
 
 if(CMAKE_SYSTEM_NAME MATCHES "Windows")
-  add_executable(IEMidi Source/main.cpp)
+  add_executable(IEMidi WIN32 Source/main.cpp)
+  set_target_properties(IEMidi PROPERTIES LINK_FLAGS "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup")
 elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
   add_executable(IEMidi MACOSX_BUNDLE Source/main.cpp)
   add_custom_command(TARGET IEMidi POST_BUILD
