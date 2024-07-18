@@ -108,12 +108,49 @@ endif()
 if(CMAKE_SYSTEM_NAME MATCHES "Windows")
   add_executable(IEMidi WIN32 Source/main.cpp)
   set_target_properties(IEMidi PROPERTIES LINK_FLAGS "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup")
+  set(CPACK_GENERATOR "NSIS")
 elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
   add_executable(IEMidi MACOSX_BUNDLE Source/main.cpp)
   add_custom_command(TARGET IEMidi POST_BUILD
     COMMAND codesign --force --deep -s "-" $<TARGET_BUNDLE_DIR:IEMidi>
     COMMAND codesign --verify --verbose $<TARGET_BUNDLE_DIR:IEMidi>)
+  set(CPACK_GENERATOR "dragndrop")
 endif()
 
 target_link_libraries(IEMidi PUBLIC LIEMidi)
+install(TARGETS IEMidi RUNTIME DESTINATION bin)
+install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/Resources" DESTINATION ./)
+include(InstallRequiredSystemLibraries)
+
+begin_section_message("Packaging IEMidi")
+set(CPACK_PACKAGE_NAME "${PROJECT_NAME}")
+set(CPACK_PACKAGE_VENDOR "Incus Entertainment")
+set(CPACK_PACKAGE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/Packages")
+file(MAKE_DIRECTORY ${CPACK_PACKAGE_DIRECTORY})
+set(CPACK_PACKAGE_INSTALL_DIRECTORY "${CPACK_PACKAGE_NAME}")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Midi Map Editor Tool")
+set(CPACK_PACKAGE_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
+set(CPACK_PACKAGE_VERSION_MINOR ${PROJECT_VERSION_MINOR})
+set(CPACK_PACKAGE_VERSION_PATCH ${PROJECT_VERSION_PATCH})
+set(CPACK_VERBATIM_VARIABLES TRUE)
+set(CPACK_PACKAGE_ICON "${CMAKE_CURRENT_SOURCE_DIR}\\Resources\\Icons\\IEIcon.ico")
+set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
+
+if(CMAKE_SYSTEM_NAME MATCHES "Windows")
+set(CPACK_NSIS_MUI_ICON "${CMAKE_CURRENT_SOURCE_DIR}\\Resources\\Icons\\IEIcon.ico")
+set(CPACK_NSIS_MUI_UNIICON "${CMAKE_CURRENT_SOURCE_DIR}\\Resources\\Icons\\Uninstall-IEIcon.ico")
+set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL TRUE)
+set(CPACK_NSIS_MUI_FINISHPAGE_RUN "${CPACK_PACKAGE_NAME}.exe")
+set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
+    CreateShortCut \"$DESKTOP\\${CPACK_PACKAGE_NAME}.lnk\" \"$INSTDIR\\bin\\${CPACK_PACKAGE_NAME}.exe\" \"\" \"$INSTDIR\\Resources\\Icons\\IEIcon.ico\" 0
+    CreateShortCut \"$SMPROGRAMS\\${CPACK_PACKAGE_NAME}.lnk\" \"$INSTDIR\\bin\\${CPACK_PACKAGE_NAME}.exe\" \"\" \"$INSTDIR\\Resources\\Icons\\IEIcon.ico\" 0
+")
+set(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "
+    Delete \"$DESKTOP\\${CPACK_PACKAGE_NAME}.lnk\"
+    Delete \"$SMPROGRAMS\\${CPACK_PACKAGE_NAME}.lnk\"
+")
+elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
+endif()
+
+include(CPack)
 begin_section_message("Finished Setting IEMidi")

@@ -19,9 +19,9 @@ namespace IEAction
     std::unique_ptr<IEAction_Mute> GetMuteAction()
     {
 #if defined (_WIN32)
-            return std::make_unique<IEAction_Mute_Impl_Win>();
+        return std::make_unique<IEAction_Mute_Impl_Win>();
 #elif defined (__APPLE__)
-            return std::make_unique<IEAction_Mute_Impl_Apple>();
+        return std::make_unique<IEAction_Mute_Impl_Apple>();
 #endif
     }
 
@@ -32,7 +32,11 @@ namespace IEAction
 
     std::unique_ptr<IEAction_OpenFile> GetOpenFileAction()
     {
-        return std::make_unique<IEAction_OpenFile>();
+#if defined (_WIN32)
+        return std::make_unique<IEAction_OpenFile_Impl_Win>();
+#elif defined (__APPLE__)
+        return std::make_unique<IEAction_OpenFile_Impl_Apple>();
+#endif
     }
 }
 
@@ -48,12 +52,4 @@ void IEAction_ConsoleCommand::ExecuteConsoleCommand(const std::string& ConsoleCo
     }
 
     system(FinalConsoleCommand.c_str());
-}
-
-void IEAction_OpenFile::OpenFile(const std::string& FilePath)
-{
-    if (std::filesystem::exists(std::filesystem::path(FilePath)))
-    {
-        system(FilePath.c_str());
-    }
 }

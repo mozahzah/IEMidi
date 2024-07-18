@@ -44,4 +44,10 @@ private:
     CComPtr<IAudioEndpointVolume> m_AudioEndpointVolume;
     std::function<void(bool)> m_OnMuteChangeCallback;
 };
+
+class IEAction_OpenFile_Impl_Win : public IEAction_OpenFile
+{
+public:
+    void OpenFile(const std::string& FilePath) override;
+};
 #endif

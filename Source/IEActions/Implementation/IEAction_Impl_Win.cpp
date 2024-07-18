@@ -130,4 +130,24 @@ IAudioEndpointVolume* IEAction_Mute_Impl_Win::GetMainAudioEndpointVolume()
     }
     return EndpointVolume;
 }
+
+void IEAction_OpenFile_Impl_Win::OpenFile(const std::string& FilePath)
+{
+    SHELLEXECUTEINFOA ShExecInfo = {0};
+    ShExecInfo.cbSize = sizeof(SHELLEXECUTEINFOA);
+    ShExecInfo.fMask = SEE_MASK_NOCLOSEPROCESS;
+    ShExecInfo.hwnd = NULL;
+    ShExecInfo.lpVerb = "open"; 
+    ShExecInfo.lpFile = FilePath.c_str();
+    ShExecInfo.lpDirectory = NULL;
+    ShExecInfo.nShow = SW_SHOWNORMAL;
+    ShExecInfo.hInstApp = NULL;
+
+    if (!ShellExecuteExA(&ShExecInfo))
+    {
+        ShExecInfo.fMask = SEE_MASK_INVOKEIDLIST;
+        ShExecInfo.lpVerb = "openas";
+        ShellExecuteExA(&ShExecInfo);
+    }
+}
 #endif

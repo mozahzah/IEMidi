@@ -154,4 +154,10 @@ OSStatus IEAction_Mute_Impl_Apple::MuteChangeCallback(AudioObjectID ObjectID, ui
     }
     return Status;
 }
+
+void IEAction_OpenFile_Impl_Apple::OpenFile(const std::string& FilePath)
+{
+    std::string OpenFileCommand = "open \"" + FilePath + "\"";
+    int result = system(OpenFileCommand.c_str());
+}
 #endif

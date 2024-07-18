@@ -33,7 +33,7 @@ class IEAction_OpenFile
 {
 public:
     virtual ~IEAction_OpenFile() = default;
-    virtual void OpenFile(const std::string& FilePath);
+    virtual void OpenFile(const std::string& FilePath) {};
 };
 
 namespace IEAction

@@ -45,4 +45,10 @@ private:
     AudioDeviceID m_AudioDeviceID;
     std::function<void(float)> m_OnMuteChangeCallback;
 };
+
+class IEAction_OpenFile_Impl_Apple : public IEAction_OpenFile
+{
+public:
+    void OpenFile(const std::string& FilePath) override;
+};
 #endif

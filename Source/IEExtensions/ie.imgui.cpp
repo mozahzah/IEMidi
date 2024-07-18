@@ -5,10 +5,10 @@
 #include "IECore/IECore.h"
 #include "IECore/IEUtils.h"
 
-static int DefaultFontIndex = -1;
-static int BoldFontIndex = -1;
-static int SubtitleFontIndex = -1;
-static int TitleFontIndex = -1;
+static std::optional<uint8_t> DefaultFontIndex;
+static std::optional<uint8_t> BoldFontIndex;
+static std::optional<uint8_t> SubtitleFontIndex;
+static std::optional<uint8_t> TitleFontIndex;
 
 namespace ImGui
 {
@@ -141,21 +141,17 @@ namespace ImGui
             ImGui::OpenPopup(FileFinderPopupLabel);
         }
 
-        static constexpr uint32_t WindowFlags = ImGuiWindowFlags_NoResize |
-                                                ImGuiWindowFlags_NoMove |
-                                                ImGuiWindowFlags_NoScrollbar |
-                                                ImGuiWindowFlags_NoScrollWithMouse |
-                                                ImGuiWindowFlags_NoCollapse;
+        static constexpr uint32_t WindowFlags = ImGuiWindowFlags_NoCollapse;
 
         ImGuiIO& IO = ImGui::GetIO();
-        const float WindowWidth = IO.DisplaySize.x * 0.5f;
-        const float WindowHeight = IO.DisplaySize.y * 0.7f;
+        static const float WindowWidth = IO.DisplaySize.x * 0.5f;
+        static float WindowHeight = IO.DisplaySize.y * 0.7f;
 
-        const float WindowPosX = (IO.DisplaySize.x - WindowWidth) * 0.5f;
-        const float WindowPosY = (IO.DisplaySize.y - WindowHeight) * 0.5f;
+        static float WindowPosX = (IO.DisplaySize.x - WindowWidth) * 0.5f;
+        static float WindowPosY = (IO.DisplaySize.y - WindowHeight) * 0.5f;
 
-        ImGui::SetNextWindowSize(ImVec2(WindowWidth, WindowHeight), ImGuiCond_Always);
-        ImGui::SetNextWindowPos(ImVec2(WindowPosX, WindowPosY));
+        ImGui::SetNextWindowSize(ImVec2(WindowWidth, WindowHeight), ImGuiCond_Once);
+        ImGui::SetNextWindowPos(ImVec2(WindowPosX, WindowPosY), ImGuiCond_Once);
 
         if (ImGui::BeginPopupModal(FileFinderPopupLabel, &bFileFinderOpen, WindowFlags))
         {
@@ -205,18 +201,30 @@ namespace ImGui
             const std::filesystem::path SpaceGroteskFontPath = AppDirectory / "Resources/Fonts/Space_Grotesk/static/SpaceGrotesk-Medium.ttf";
             const std::filesystem::path SpaceGroteskSemiBoldFontPath = AppDirectory / "Resources/Fonts/Space_Grotesk/static/SpaceGrotesk-SemiBold.ttf";
             const std::filesystem::path SpaceGroteskBoldFontPath = AppDirectory / "Resources/Fonts/Space_Grotesk/static/SpaceGrotesk-Bold.ttf";
-            
-            IO.Fonts->AddFontFromFileTTF(IEUtils::StringCast<char>(SpaceGroteskFontPath.c_str()).c_str(), 28.0f);
-            DefaultFontIndex = IO.Fonts->Fonts.size() - 1;
 
-            IO.Fonts->AddFontFromFileTTF(IEUtils::StringCast<char>(SpaceGroteskSemiBoldFontPath.c_str()).c_str(), 28.0f);
-            BoldFontIndex = IO.Fonts->Fonts.size() - 1;
+            if (std::filesystem::exists(SpaceGroteskFontPath) && !DefaultFontIndex.has_value())
+            {
+                IO.Fonts->AddFontFromFileTTF(IEUtils::StringCast<char>(SpaceGroteskFontPath.c_str()).c_str(), 28.0f);
+                DefaultFontIndex = IO.Fonts->Fonts.size() - 1;
+            }
 
-            IO.Fonts->AddFontFromFileTTF(IEUtils::StringCast<char>(SpaceGroteskSemiBoldFontPath.c_str()).c_str(), 34.0f);
-            SubtitleFontIndex = IO.Fonts->Fonts.size() - 1;
+            if (std::filesystem::exists(SpaceGroteskSemiBoldFontPath) && !BoldFontIndex.has_value())
+            {
+                IO.Fonts->AddFontFromFileTTF(IEUtils::StringCast<char>(SpaceGroteskSemiBoldFontPath.c_str()).c_str(), 28.0f);
+                BoldFontIndex = IO.Fonts->Fonts.size() - 1;
+            }
 
-            IO.Fonts->AddFontFromFileTTF(IEUtils::StringCast<char>(SpaceGroteskBoldFontPath.c_str()).c_str(), 40.0f);
-            TitleFontIndex = IO.Fonts->Fonts.size() - 1;
+            if (std::filesystem::exists(SpaceGroteskSemiBoldFontPath) && !SubtitleFontIndex.has_value())
+            {
+                IO.Fonts->AddFontFromFileTTF(IEUtils::StringCast<char>(SpaceGroteskSemiBoldFontPath.c_str()).c_str(), 34.0f);
+                SubtitleFontIndex = IO.Fonts->Fonts.size() - 1;
+            }
+
+            if (std::filesystem::exists(SpaceGroteskBoldFontPath) && !TitleFontIndex.has_value())
+            {
+                IO.Fonts->AddFontFromFileTTF(IEUtils::StringCast<char>(SpaceGroteskBoldFontPath.c_str()).c_str(), 40.0f);
+                TitleFontIndex = IO.Fonts->Fonts.size() - 1;
+            }
 
             IO.Fonts->Build();
             IO.FontGlobalScale = 0.65f;
@@ -346,9 +354,9 @@ namespace ImGui
         ImFont* GetBoldFont()
         {
             ImGuiIO& IO = ImGui::GetIO();
-            if (IO.Fonts->Fonts.size() >= BoldFontIndex)
+            if (BoldFontIndex.has_value() && IO.Fonts->Fonts.size() >= BoldFontIndex)
             {
-                return IO.Fonts->Fonts[BoldFontIndex];
+                return IO.Fonts->Fonts[BoldFontIndex.value()];
             }
             return nullptr;
         }
@@ -356,9 +364,9 @@ namespace ImGui
         ImFont* GetSubtitleFont()
         {
             ImGuiIO& IO = ImGui::GetIO();
-            if (IO.Fonts->Fonts.size() >= SubtitleFontIndex)
+            if (SubtitleFontIndex.has_value() && IO.Fonts->Fonts.size() >= SubtitleFontIndex)
             {
-                return IO.Fonts->Fonts[SubtitleFontIndex];
+                return IO.Fonts->Fonts[SubtitleFontIndex.value()];
             }
             return nullptr;
         }
@@ -366,9 +374,9 @@ namespace ImGui
         ImFont* GetTitleFont()
         {
             ImGuiIO& IO = ImGui::GetIO();
-            if (IO.Fonts->Fonts.size() >= TitleFontIndex)
+            if (TitleFontIndex.has_value() && IO.Fonts->Fonts.size() >= TitleFontIndex)
             {
-                return IO.Fonts->Fonts[TitleFontIndex];
+                return IO.Fonts->Fonts[TitleFontIndex.value()];
             }
             return nullptr;
         }
