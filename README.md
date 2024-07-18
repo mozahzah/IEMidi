@@ -11,6 +11,7 @@ It also includes a MIDI logger for monitoring MIDI messages in real-time.
 ## Features
 - **MIDI Map Editor**: Map MIDI messages to various actions like volume, mute, console commands, or opening files.
 - **MIDI Logger**: Monitor and log MIDI messages in real-time for debugging and analysis.
+- **Run in background**: Activate your MIDI device and keep the application running in the background.
 
 ## Third-Party Libraries Used
 - [Dear ImGui](https://github.com/ocornut/imgui)
