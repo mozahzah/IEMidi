@@ -17,6 +17,7 @@ It also includes a MIDI logger for monitoring MIDI messages in real-time.
 - [Dear ImGui](https://github.com/ocornut/imgui)
 - [RtMidi](https://github.com/thestk/rtmidi)
 - [Rapid YAML](https://github.com/biojppm/rapidyaml)
+- [stb](https://github.com/nothings/stb)
 
 ## License
 This project is licensed under the [GPL 2.0 License](./LICENSE).
