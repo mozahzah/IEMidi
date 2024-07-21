@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "IECore/IECore.h"
+#include "IECore.h"
 
 static constexpr size_t MIDI_MESSAGE_BYTE_COUNT = 3;
 

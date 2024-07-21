@@ -3,10 +3,10 @@
 #pragma once
 
 #include "imgui.h"
-#include "IEExtensions/ie.imgui.h"
+#include "Extensions/ie.imgui.h"
 
-#include "IECore/IECore.h"
-#include "IECore/IERenderer.h"
+#include "IECore.h"
+#include "IERenderer.h"
 
 #include "IEMidiEditor.h"
 #include "IEMidiProcessor.h"

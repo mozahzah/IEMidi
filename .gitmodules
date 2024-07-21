@@ -1,12 +1,12 @@
-[submodule "imgui"]
-	path = ThirdParty/imgui
-	url = https://github.com/mozahzah/imgui.git
-[submodule "rtmidi"]
+[submodule "ThirdParty/IECore"]
+	path = ThirdParty/IECore
+	url = https://github.com/mozahzah/IECore.git
+[submodule "ThirdParty/IEActions"]
+	path = ThirdParty/IEActions
+	url = https://github.com/mozahzah/IEActions.git
+[submodule "ThirdParty/rtmidi"]
 	path = ThirdParty/rtmidi
 	url = https://github.com/thestk/rtmidi.git
 [submodule "ThirdParty/rapidyaml"]
 	path = ThirdParty/rapidyaml
 	url = https://github.com/biojppm/rapidyaml.git
-[submodule "ThirdParty/stb"]
-	path = ThirdParty/stb
-	url = https://github.com/nothings/stb.git

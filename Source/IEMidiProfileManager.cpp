@@ -5,7 +5,7 @@
 #include "ryml.hpp"
 #include "ryml_std.hpp"
 
-#include "IECore/IEUtils.h"
+#include "IEUtils.h"
 
 uint32_t IEMidiDeviceProperty::MidiDevicePropertyIDGenerator = 0;
 

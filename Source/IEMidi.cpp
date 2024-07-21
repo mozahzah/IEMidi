@@ -56,8 +56,7 @@ void IEMidi::DrawMidiDeviceSelectionWindow()
                                             ImGuiWindowFlags_NoMove |
                                             ImGuiWindowFlags_NoScrollbar |
                                             ImGuiWindowFlags_NoScrollWithMouse |
-                                            ImGuiWindowFlags_NoCollapse |
-                                            ImGuiWindowFlags_NoDocking;
+                                            ImGuiWindowFlags_NoCollapse;
 
     ImGuiViewport& MainViewport = *ImGui::GetMainViewport();
     const float WindowWidth = 250.0f;
@@ -129,8 +128,7 @@ void IEMidi::DrawSelectedMidiDeviceEditorWindow()
     static constexpr uint32_t WindowFlags = ImGuiWindowFlags_NoResize |
                                             ImGuiWindowFlags_NoMove |
                                             ImGuiWindowFlags_NoCollapse |
-                                            ImGuiWindowFlags_NoTitleBar |
-                                            ImGuiWindowFlags_NoDocking;
+                                            ImGuiWindowFlags_NoTitleBar;
 
     ImGuiViewport& MainViewport = *ImGui::GetMainViewport();
     const float WindowWidth = MainViewport.Size.x * 0.7f;
@@ -170,8 +168,7 @@ void IEMidi::DrawSideBarWindow()
                                             ImGuiWindowFlags_NoMove |
                                             ImGuiWindowFlags_NoCollapse |
                                             ImGuiWindowFlags_NoScrollbar |
-                                            ImGuiWindowFlags_NoTitleBar |
-                                            ImGuiWindowFlags_NoDocking;
+                                            ImGuiWindowFlags_NoTitleBar;
 
     ImGuiViewport& MainViewport = *ImGui::GetMainViewport();
     const float WindowWidth = MainViewport.Size.x * 0.3f;

@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "IECore/IECore.h"
+#include "IECore.h"
 
 #include "IEMidiTypes.h"
 #include "IEMidiProcessor.h"

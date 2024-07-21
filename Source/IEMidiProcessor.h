@@ -4,8 +4,8 @@
 
 #include "RtMidi.h"
 
-#include "IEActions/IEAction.h"
-#include "IECore/IECore.h"
+#include "IEAction.h"
+#include "IECore.h"
 
 #include "IEMidiTypes.h"
 

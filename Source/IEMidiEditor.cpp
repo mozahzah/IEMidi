@@ -3,9 +3,9 @@
 #include "IEMidiEditor.h"
 
 #include "imgui.h"
-#include "IEExtensions/ie.imgui.h"
+#include "Extensions/ie.imgui.h"
 
-#include "IECore/IEUtils.h"
+#include "IEUtils.h"
 
 static constexpr size_t MidiDevicePropertyEditorColumnCount = 7;
 static constexpr size_t MidiDeviceInitialOutputMessageEditorColumnCount = 3;
