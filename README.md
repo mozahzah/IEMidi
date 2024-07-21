@@ -14,10 +14,10 @@ It also includes a MIDI logger for monitoring MIDI messages in real-time.
 - **Run in background**: Activate your MIDI device and keep the application running in the background.
 
 ## Third-Party Libraries Used
-- [Dear ImGui](https://github.com/ocornut/imgui)
+- [IECore](https://github.com/mozahzah/IECore.git)
+- [IEActions](https://github.com/mozahzah/IEActions.git)
 - [RtMidi](https://github.com/thestk/rtmidi)
 - [Rapid YAML](https://github.com/biojppm/rapidyaml)
-- [stb](https://github.com/nothings/stb)
 
 ## License
 This project is licensed under the [GPL 2.0 License](./LICENSE).
