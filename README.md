@@ -1,6 +1,6 @@
 # <img src="Resources/Logos/IEIcon.png" alt="IE Logo" width="26"> IEMidi
 
-> Incus Entertainment's Solution to a MIDI Map Editor
+> IE's solution to a MIDI map editor
 
 <img src="Resources/Demos/Demo-Editor.png" alt="IEMidi Editor" width="10000">
 
