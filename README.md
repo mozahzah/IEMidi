@@ -4,7 +4,7 @@
 
 <img src="Resources/Demos/Demo-Editor.png" alt="IEMidi Editor" width="10000">
 
-**IEMidi** is a simple, open-source MIDI editor that leverages ImGui for the user interface and RtMidi for MIDI message handling.  
+**IEMidi** is a simple, open-source MIDI editor that leverages RtMidi for its MIDI message handling.  
 The editor is designed to map any MIDI message to various actions such as volume control, mute, console commands or opening files.  
 It also includes a MIDI logger for monitoring MIDI messages in real-time.
 
