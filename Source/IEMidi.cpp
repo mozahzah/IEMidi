@@ -70,54 +70,67 @@ void IEMidi::DrawMidiDeviceSelectionWindow()
     ImGui::Begin("Select Midi Device", nullptr, WindowFlags);
 
     IEMidiProcessor& MidiProcessor = GetMidiProcessor();
-    for (const std::string& MidiDeviceName : MidiProcessor.GetAvailableMidiDevices())
+    const std::vector<std::string> AvailableMidiDevices = MidiProcessor.GetAvailableMidiDevices();
+    if (!AvailableMidiDevices.empty())
     {
+        for (const std::string& MidiDeviceName : AvailableMidiDevices)
+        {
+            ImGui::PushFont(ImGui::IEStyle::GetSubtitleFont());
+            ImGui::SetSmartCursorPosYRelative(0.08f);
+            ImGui::CenteredText("%s", MidiDeviceName.c_str());
+            ImGui::PopFont();
+
+            ImGui::SetSmartCursorPosY(80.0f);
+            static const char ActivateText[] = "Activate";
+            ImGui::SetSmartCursorPosX(WindowWidth * 0.5f - ImGui::IEStyle::GetDefaultButtonSize().x - 2.0f);
+            if (ImGui::IEStyle::DefaultButton(ActivateText))
+            {
+                if (MidiProcessor.ActivateMidiDeviceProfile(MidiDeviceName))
+                {
+                    IEMidiDeviceProfile& ActiveMidiDeviceProfile = MidiProcessor.GetActiveMidiDeviceProfile();
+                    GetMidiProfileManager().LoadProfile(ActiveMidiDeviceProfile);
+                    for (const std::vector<unsigned char>& MidiMessage : ActiveMidiDeviceProfile.InitialOutputMidiMessages)
+                    {
+                        MidiProcessor.SendMidiOutputMessage(MidiMessage);
+                    }
+                    
+                    GetRenderer().CloseAppWindow();
+                    break;
+                }
+            }
+
+            ImGui::SameLine();
+
+            static const char EditText[] = "Edit";
+            ImGui::SetSmartCursorPosX(WindowWidth * 0.5f + 2.0f);
+            if (ImGui::IEStyle::DefaultButton(EditText))
+            {
+                if (MidiProcessor.ActivateMidiDeviceProfile(MidiDeviceName))
+                {
+                    IEMidiDeviceProfile& ActiveMidiDeviceProfile = MidiProcessor.GetActiveMidiDeviceProfile();
+                    GetMidiProfileManager().LoadProfile(ActiveMidiDeviceProfile);
+                    for (const std::vector<unsigned char>& MidiMessage : ActiveMidiDeviceProfile.InitialOutputMidiMessages)
+                    {
+                        MidiProcessor.SendMidiOutputMessage(MidiMessage);
+                    }
+
+                    SetAppState(IEAppState::MidiDeviceEditor);
+                    break;
+                }
+            }
+
+            ImGui::NewLine();
+            ImGui::Separator();
+        }
+    }
+    else 
+    {
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 0.5f));
         ImGui::PushFont(ImGui::IEStyle::GetSubtitleFont());
-        ImGui::SetSmartCursorPosYRelative(0.08f);
-        ImGui::CenteredText("%s", MidiDeviceName.c_str());
+        ImGui::SetSmartCursorPosYRelative(0.1f);
+        ImGui::CenteredText("No Devices Found");
         ImGui::PopFont();
-
-        ImGui::SetSmartCursorPosY(80.0f);
-        static const char ActivateText[] = "Activate";
-        ImGui::SetSmartCursorPosX(WindowWidth * 0.5f - ImGui::IEStyle::GetDefaultButtonSize().x - 2.0f);
-        if (ImGui::IEStyle::DefaultButton(ActivateText))
-        {
-            if (MidiProcessor.ActivateMidiDeviceProfile(MidiDeviceName))
-            {
-                IEMidiDeviceProfile& ActiveMidiDeviceProfile = MidiProcessor.GetActiveMidiDeviceProfile();
-                GetMidiProfileManager().LoadProfile(ActiveMidiDeviceProfile);
-                for (const std::vector<unsigned char>& MidiMessage : ActiveMidiDeviceProfile.InitialOutputMidiMessages)
-                {
-                    MidiProcessor.SendMidiOutputMessage(MidiMessage);
-                }
-                
-                GetRenderer().CloseAppWindow();
-                break;
-            }
-        }
-
-        ImGui::SameLine();
-
-        static const char EditText[] = "Edit";
-        ImGui::SetSmartCursorPosX(WindowWidth * 0.5f + 2.0f);
-        if (ImGui::IEStyle::DefaultButton(EditText))
-        {
-            if (MidiProcessor.ActivateMidiDeviceProfile(MidiDeviceName))
-            {
-                IEMidiDeviceProfile& ActiveMidiDeviceProfile = MidiProcessor.GetActiveMidiDeviceProfile();
-                GetMidiProfileManager().LoadProfile(ActiveMidiDeviceProfile);
-                for (const std::vector<unsigned char>& MidiMessage : ActiveMidiDeviceProfile.InitialOutputMidiMessages)
-                {
-                    MidiProcessor.SendMidiOutputMessage(MidiMessage);
-                }
-
-                SetAppState(IEAppState::MidiDeviceEditor);
-                break;
-            }
-        }
-
-        ImGui::NewLine();
-        ImGui::Separator();
+        ImGui::PopStyleColor();
     }
 
     ImGui::End();

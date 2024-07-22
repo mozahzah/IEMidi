@@ -3,16 +3,16 @@
 cmake_minimum_required(VERSION 3.29)
 
 if(WIN32)
-  add_executable(IEMidi WIN32 "./main.cpp")
-  set_target_properties(IEMidi PROPERTIES LINK_FLAGS "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup")
+  add_executable(${PROJECT_NAME} WIN32 "./main.cpp")
+  set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup")
 elseif(APPLE)
-  add_executable(IEMidi MACOSX_BUNDLE "./main.cpp")
-  add_custom_command(TARGET IEMidi POST_BUILD
-    COMMAND codesign --force --deep -s "-" $<TARGET_BUNDLE_DIR:IEMidi>
-    COMMAND codesign --verify --verbose $<TARGET_BUNDLE_DIR:IEMidi>)
+  add_executable(${PROJECT_NAME} MACOSX_BUNDLE "./main.cpp")
+  add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND codesign --force --deep -s "-" $<TARGET_BUNDLE_DIR:${PROJECT_NAME}>
+    COMMAND codesign --verify --verbose $<TARGET_BUNDLE_DIR:${PROJECT_NAME}>)
 endif()
 
-target_link_libraries(IEMidi PUBLIC LIEMidi)
+target_link_libraries(${PROJECT_NAME} PUBLIC LIEMidi)
 
 message("Installation prefix: ${CMAKE_INSTALL_PREFIX}")
 install(TARGETS ${PROJECT_NAME} 
@@ -36,48 +36,33 @@ foreach(DEPENDENCY ${DEPENDENCIES})
   endif()
 endforeach()
 
-# message("Adding additional source files and variables for ${CMAKE_SYSTEM_NAME}")
-# if(CMAKE_SYSTEM_NAME MATCHES "Windows")
-#   # Specific windows source files and variables can be appended here
-# elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
-#   set(MACOSX_BUNDLE TRUE)
-#   set(MACOSX_BUNDLE_BUNDLE_NAME "IEMidi")
-#   set(MACOSX_BUNDLE_GUI_IDENTIFIER "com.IE.IEMidi")
-#   set(MACOSX_BUNDLE_BUNDLE_VERSION "1.0.0")
-#   set(MACOSX_BUNDLE_SHORT_VERSION_STRING "1.0")
-#   set(CODE_SIGN_IDENTITY "Incus Entertainment")
-#   set(CMAKE_XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "Incus Entertainment")
-# endif()
+begin_section_message("Packaging IEMidi")
+set(CPACK_PACKAGE_NAME "${PROJECT_NAME}")
+set(CPACK_PACKAGE_VENDOR "Incus Entertainment")
+set(CPACK_PACKAGE_DIRECTORY "${CMAKE_SOURCE_DIR}/package")
+set(CPACK_PACKAGE_INSTALL_DIRECTORY "${CPACK_PACKAGE_NAME}")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Midi Map Editor Tool")
+set(CPACK_PACKAGE_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
+set(CPACK_PACKAGE_VERSION_MINOR ${PROJECT_VERSION_MINOR})
+set(CPACK_PACKAGE_VERSION_PATCH ${PROJECT_VERSION_PATCH})
+set(CPACK_VERBATIM_VARIABLES TRUE)
+set(CPACK_PACKAGE_ICON "${CMAKE_SOURCE_DIR}\\Resources\\Icons\\IEIcon.ico")
+set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE")
 
-# begin_section_message("Packaging IEMidi")
-# set(CPACK_PACKAGE_NAME "${PROJECT_NAME}")
-# set(CPACK_PACKAGE_VENDOR "Incus Entertainment")
-# set(CPACK_PACKAGE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/package")
-# file(MAKE_DIRECTORY ${CPACK_PACKAGE_DIRECTORY})
-# set(CPACK_PACKAGE_INSTALL_DIRECTORY "${CPACK_PACKAGE_NAME}")
-# set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Midi Map Editor Tool")
-# set(CPACK_PACKAGE_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
-# set(CPACK_PACKAGE_VERSION_MINOR ${PROJECT_VERSION_MINOR})
-# set(CPACK_PACKAGE_VERSION_PATCH ${PROJECT_VERSION_PATCH})
-# set(CPACK_VERBATIM_VARIABLES TRUE)
-# set(CPACK_PACKAGE_ICON "${CMAKE_CURRENT_SOURCE_DIR}\\Resources\\Icons\\IEIcon.ico")
-# set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
+if(WIN32)
+  set(CPACK_GENERATOR NSIS64)
+  set(CPACK_NSIS_MUI_ICON "${CMAKE_SOURCE_DIR}\\Resources\\Icons\\IEIcon.ico")
+  set(CPACK_NSIS_MUI_UNIICON "${CMAKE_SOURCE_DIR}\\Resources\\Icons\\IEIcon-Uninstall.ico")
+  set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL TRUE)
+  set(CPACK_NSIS_MUI_FINISHPAGE_RUN "${CPACK_PACKAGE_NAME}.exe")
+  set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
+    CreateShortCut \"$DESKTOP\\${CPACK_PACKAGE_NAME}.lnk\" \"$INSTDIR\\bin\\${CPACK_PACKAGE_NAME}.exe\" \"\" \"$INSTDIR\\Resources\\Icons\\IEIcon.ico\" 0
+    CreateShortCut \"$SMPROGRAMS\\${CPACK_PACKAGE_NAME}.lnk\" \"$INSTDIR\\bin\\${CPACK_PACKAGE_NAME}.exe\" \"\" \"$INSTDIR\\Resources\\Icons\\IEIcon.ico\" 0")
+  set(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "
+    Delete \"$DESKTOP\\${CPACK_PACKAGE_NAME}.lnk\"
+    Delete \"$SMPROGRAMS\\${CPACK_PACKAGE_NAME}.lnk\"")
+elseif(APPLE)
+  set(CPACK_GENERATOR DragNDrop)
+endif()
 
-# if(CMAKE_SYSTEM_NAME MATCHES "Windows")
-# set(CPACK_NSIS_MUI_ICON "${CMAKE_CURRENT_SOURCE_DIR}\\Resources\\Icons\\IEIcon.ico")
-# set(CPACK_NSIS_MUI_UNIICON "${CMAKE_CURRENT_SOURCE_DIR}\\Resources\\Icons\\Uninstall-IEIcon.ico")
-# set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL TRUE)
-# set(CPACK_NSIS_MUI_FINISHPAGE_RUN "${CPACK_PACKAGE_NAME}.exe")
-# set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
-#     CreateShortCut \"$DESKTOP\\${CPACK_PACKAGE_NAME}.lnk\" \"$INSTDIR\\bin\\${CPACK_PACKAGE_NAME}.exe\" \"\" \"$INSTDIR\\Resources\\Icons\\IEIcon.ico\" 0
-#     CreateShortCut \"$SMPROGRAMS\\${CPACK_PACKAGE_NAME}.lnk\" \"$INSTDIR\\bin\\${CPACK_PACKAGE_NAME}.exe\" \"\" \"$INSTDIR\\Resources\\Icons\\IEIcon.ico\" 0
-# ")
-# set(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "
-#     Delete \"$DESKTOP\\${CPACK_PACKAGE_NAME}.lnk\"
-#     Delete \"$SMPROGRAMS\\${CPACK_PACKAGE_NAME}.lnk\"
-# ")
-# elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
-# endif()
-
-# include(CPack)
-# begin_section_message("Finished Setting IEMidi")
+include(CPack)
