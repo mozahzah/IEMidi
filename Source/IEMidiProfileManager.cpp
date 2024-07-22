@@ -24,7 +24,7 @@ static constexpr uint32_t INITIAL_TREE_ARENA_CHAR_COUNT = 2048;
 
 IEMidiProfileManager::IEMidiProfileManager()
 {
-    const std::filesystem::path IEMidiConfigFolderPath = IEUtils::GetIEMidiConfigFolderPath();
+    const std::filesystem::path IEMidiConfigFolderPath = IEUtils::GetIEConfigFolderPath();
     if (!IEMidiConfigFolderPath.empty())
     {
         const std::filesystem::path MidiProfilesFilePath = IEMidiConfigFolderPath / IEMIDI_PROFILES_FILENAME;
@@ -43,7 +43,7 @@ IEMidiProfileManager::IEMidiProfileManager()
 std::filesystem::path IEMidiProfileManager::GetIEMidiProfilesFilePath() const
 {
     std::filesystem::path MidiDeviceProfilesFilePath;
-    const std::filesystem::path IEMidiConfigFolderPath = IEUtils::GetIEMidiConfigFolderPath();
+    const std::filesystem::path IEMidiConfigFolderPath = IEUtils::GetIEConfigFolderPath();
     if (std::filesystem::exists(IEMidiConfigFolderPath))
     {
         const std::filesystem::path PotentialMidiDeviceProfilesFilePath = IEMidiConfigFolderPath / IEMIDI_PROFILES_FILENAME;
@@ -242,7 +242,7 @@ IEResult IEMidiProfileManager::LoadProfile(IEMidiDeviceProfile& MidiDeviceProfil
 IEResult IEMidiProfileManager::RemoveProfile(const IEMidiDeviceProfile& MidiDeviceProfile) const
 {
     IEResult Result(IEResult::Type::Fail, "Failed to remove profile");
-    const std::filesystem::path IEMidiConfigFolderPath = IEUtils::GetIEMidiConfigFolderPath();
+    const std::filesystem::path IEMidiConfigFolderPath = IEUtils::GetIEConfigFolderPath();
     // TODO
     // if (!IEMidiConfigFolderPath.empty())
     // {
