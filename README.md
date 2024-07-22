@@ -1,7 +1,5 @@
 # <img src="Resources/Logos/IEIcon.png" alt="IE Logo" width="26"> IEMidi
 
-> IE's solution to a MIDI map editor
-
 <img src="Resources/Demos/Demo-Editor.png" alt="IEMidi Editor" width="10000">
 
 **IEMidi** is a simple, open-source MIDI editor that leverages RtMidi for its MIDI message handling.  
