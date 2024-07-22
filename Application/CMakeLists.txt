@@ -14,16 +14,18 @@ endif()
 
 target_link_libraries(IEMidi PUBLIC LIEMidi)
 
-# install(TARGETS IEMidi 
-#   EXPORT ${LIBRARY_NAME} 
-#   ARCHIVE DESTINATION lib
-#   LIBRARY DESTINATION lib
-#   RUNTIME DESTINATION bin)
-# install(TARGETS ${LIBRARY_NAME}
-#   ARCHIVE DESTINATION lib
-#   LIBRARY DESTINATION lib)
+message("Installation prefix: ${CMAKE_INSTALL_PREFIX}")
+install(TARGETS IEMidi 
+  EXPORT ${LIBRARY_NAME} 
+  BUNDLE DESTINATION .
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin)
+install(TARGETS ${LIBRARY_NAME}
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib)
 
-# include(InstallRequiredSystemLibraries)
+include(InstallRequiredSystemLibraries)
 
 # message("Adding additional source files and variables for ${CMAKE_SYSTEM_NAME}")
 # if(CMAKE_SYSTEM_NAME MATCHES "Windows")
