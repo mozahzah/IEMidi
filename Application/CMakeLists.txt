@@ -13,8 +13,16 @@ elseif(APPLE)
 endif()
 
 target_link_libraries(IEMidi PUBLIC LIEMidi)
-# install(TARGETS IEMidi RUNTIME DESTINATION bin)
-# install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/Resources" DESTINATION ./)
+
+# install(TARGETS IEMidi 
+#   EXPORT ${LIBRARY_NAME} 
+#   ARCHIVE DESTINATION lib
+#   LIBRARY DESTINATION lib
+#   RUNTIME DESTINATION bin)
+# install(TARGETS ${LIBRARY_NAME}
+#   ARCHIVE DESTINATION lib
+#   LIBRARY DESTINATION lib)
+
 # include(InstallRequiredSystemLibraries)
 
 # message("Adding additional source files and variables for ${CMAKE_SYSTEM_NAME}")
