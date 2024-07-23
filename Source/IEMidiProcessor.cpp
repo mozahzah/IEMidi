@@ -260,6 +260,7 @@ void IEMidiProcessor::OnRtMidiCallback(double TimeStamp, std::vector<unsigned ch
         const std::vector<unsigned char>& MidiMessage = *Message;
         if (IEMidiProcessor* const MidiProcessor = reinterpret_cast<IEMidiProcessor*>(UserData))
         {
+            bool bIncludeProcess = true;
             if (MidiProcessor->m_ActiveMidiDeviceProfile)
             {
                 for (IEMidiDeviceProperty& MidiDeviceProperty : MidiProcessor->m_ActiveMidiDeviceProfile->Properties)
@@ -268,6 +269,7 @@ void IEMidiProcessor::OnRtMidiCallback(double TimeStamp, std::vector<unsigned ch
                     {
                         MidiDeviceProperty.MidiMessage = MidiMessage;
                         MidiDeviceProperty.bIsRecording = false;
+                        bIncludeProcess = false;
                     }
                 }
             }
@@ -278,7 +280,11 @@ void IEMidiProcessor::OnRtMidiCallback(double TimeStamp, std::vector<unsigned ch
             }
 
             MidiProcessor->m_IncomingMidiMessages.push_front(MidiMessage);
-            MidiProcessor->ProcessMidiInputMessage(MidiMessage);
+
+            if (bIncludeProcess)
+            {
+                MidiProcessor->ProcessMidiInputMessage(MidiMessage);
+            }
         }
     }
 }

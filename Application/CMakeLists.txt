@@ -22,6 +22,8 @@ install(TARGETS ${PROJECT_NAME}
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 include(InstallRequiredSystemLibraries)
+install(DIRECTORY "${CMAKE_SOURCE_DIR}/Resources" DESTINATION ".")
+install(DIRECTORY "${CMAKE_SOURCE_DIR}/Requirements" DESTINATION ".")
 
 get_target_property(DEPENDENCIES ${PROJECT_NAME} LINK_LIBRARIES)
 foreach(DEPENDENCY ${DEPENDENCIES})
@@ -55,7 +57,27 @@ if(WIN32)
   set(CPACK_NSIS_MUI_UNIICON "${CMAKE_SOURCE_DIR}\\Resources\\Icons\\IEIcon-Uninstall.ico")
   set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL TRUE)
   set(CPACK_NSIS_MUI_FINISHPAGE_RUN "${CPACK_PACKAGE_NAME}.exe")
+  set(CPACK_NSIS_DEFINES "RequestExecutionLevel admin")
+  get_filename_component(VULKAN_FILE_NAME ${Vulkan_LIBRARY} NAME_WE)
+  set(VULKAN_RT_FILE_PATH "$ENV{WINDIR}\\System32\\${VULKAN_FILE_NAME}.dll")
+  message("Expected Vulkan RT ${VULKAN_RT_FILE_PATH}")
   set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
+
+    DetailPrint \"${VULKAN_RT_FILE_PATH}\"
+    IfFileExists \"${VULKAN_RT_FILE_PATH}\" vulkanRT_found vulkanRT_not_found
+
+    vulkanRT_found:
+    DetailPrint \"VulkanRT found and installed.\"
+    goto post_vulkanRT
+    
+    vulkanRT_not_found:
+    MessageBox MB_YESNO \"VulkanRT must be installed for IEMidi to work, do you want to install VulkanRT now?\" IDYES install_vulkanRT IDNO post_vulkanRT
+
+    install_vulkanRT:
+    ExecWait \"\$INSTDIR\\Requirements\\VulkanRT-1.3.290.0-Installer.exe\"
+
+    post_vulkanRT:
+
     CreateShortCut \"$DESKTOP\\${CPACK_PACKAGE_NAME}.lnk\" \"$INSTDIR\\bin\\${CPACK_PACKAGE_NAME}.exe\" \"\" \"$INSTDIR\\Resources\\Icons\\IEIcon.ico\" 0
     CreateShortCut \"$SMPROGRAMS\\${CPACK_PACKAGE_NAME}.lnk\" \"$INSTDIR\\bin\\${CPACK_PACKAGE_NAME}.exe\" \"\" \"$INSTDIR\\Resources\\Icons\\IEIcon.ico\" 0")
   set(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "
