@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-2.0-only
 # Copyright © 2024 mozahzah (Incus Entertainment). All rights reserved.
 
 cmake_minimum_required(VERSION 3.29)
