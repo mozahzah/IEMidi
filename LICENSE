@@ -7,11 +7,8 @@ Usage-Guide:
   Valid-License-Identifier: GPL-2.0-only
   https://spdx.org/licenses/GPL-2.0-only.html
 
-  To use this license in source code, put one of the following SPDX
-  tag/value pairs into a comment according to the placement
-  guidelines in the licensing rules documentation.
-  For 'GNU General Public License (GPL) version 2 only' use:
-    SPDX-License-Identifier: GPL-2.0-only
+  To apply this license to your contributed source code, include the following SPDX tag/value pair as a comment on the first line of each source code file:
+  SPDX-License-Identifier: GPL-2.0-only
 
 License-Text:
 
