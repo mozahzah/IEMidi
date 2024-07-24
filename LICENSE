@@ -1,11 +1,18 @@
-Valid-License-Identifier: GPL-2.0-only
-https://spdx.org/licenses/GPL-2.0-only.html
+IEMidi is licensed under the GNU General Public License version 2 only, as specified by the SPDX-License-Identifier: GPL-2.0-only. 
+The terms of the GNU General Public License version 2, detailed in the text below, govern the use, distribution, and modification of IEMidi and its source code. 
+This license does not extend to any third-party software or components included with IEMidi.
+
 Usage-Guide:
+
+  Valid-License-Identifier: GPL-2.0-only
+  https://spdx.org/licenses/GPL-2.0-only.html
+
   To use this license in source code, put one of the following SPDX
   tag/value pairs into a comment according to the placement
   guidelines in the licensing rules documentation.
   For 'GNU General Public License (GPL) version 2 only' use:
     SPDX-License-Identifier: GPL-2.0-only
+
 License-Text:
 
 		    GNU GENERAL PUBLIC LICENSE
