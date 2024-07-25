@@ -18,4 +18,4 @@ It also includes a MIDI logger for monitoring MIDI messages in real-time.
 - [Rapid YAML](https://github.com/biojppm/rapidyaml)
 
 ## License
-This project is licensed under the [GPL 2.0 License](./LICENSE).
+This work is licensed under the [SPDX-License-Identifier: GPL-2.0-only](./LICENSE).
