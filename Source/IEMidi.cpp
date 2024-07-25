@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright © 2024 mozahzah (Incus Entertainment). All rights reserved.
+// Copyright © 2024 Immortal Echoes. All rights reserved.
+// Author: mozahzah
 
 #include "IEMidi.h"
 
@@ -55,10 +56,9 @@ void IEMidi::DrawMidiDeviceSelectionWindow()
 {
     static constexpr uint32_t WindowFlags = ImGuiWindowFlags_NoResize |
                                             ImGuiWindowFlags_NoMove |
-                                            ImGuiWindowFlags_NoScrollbar |
-                                            ImGuiWindowFlags_NoScrollWithMouse |
-                                            ImGuiWindowFlags_NoCollapse;
-
+                                            ImGuiWindowFlags_NoCollapse |
+                                            ImGuiWindowFlags_NoTitleBar;
+                                            
     ImGuiViewport& MainViewport = *ImGui::GetMainViewport();
     const float WindowWidth = 250.0f;
     const float WindowHeight = MainViewport.Size.y * 0.5f;
@@ -70,6 +70,11 @@ void IEMidi::DrawMidiDeviceSelectionWindow()
 
     ImGui::Begin("Select Midi Device", nullptr, WindowFlags);
 
+    ImGui::SetSmartCursorPosYRelative(0.04f);
+    ImGui::PushFont(ImGui::IEStyle::GetSubtitleFont());
+    ImGui::CenteredText("Select MIDI Device");
+    ImGui::PopFont();
+
     IEMidiProcessor& MidiProcessor = GetMidiProcessor();
     const std::vector<std::string> AvailableMidiDevices = MidiProcessor.GetAvailableMidiDevices();
     if (!AvailableMidiDevices.empty())
@@ -77,13 +82,14 @@ void IEMidi::DrawMidiDeviceSelectionWindow()
         for (const std::string& MidiDeviceName : AvailableMidiDevices)
         {
             ImGui::PushFont(ImGui::IEStyle::GetSubtitleFont());
-            ImGui::SetSmartCursorPosYRelative(0.08f);
+            ImGui::SetSmartCursorPosYRelative(0.2f);
             ImGui::CenteredText("%s", MidiDeviceName.c_str());
             ImGui::PopFont();
+            ImGui::Separator();
 
             ImGui::SetSmartCursorPosY(80.0f);
             static const char ActivateText[] = "Activate";
-            ImGui::SetSmartCursorPosX(WindowWidth * 0.5f - ImGui::IEStyle::GetDefaultButtonSize().x - 2.0f);
+            ImGui::SetSmartCursorPosX(WindowWidth * 0.5f - ImGui::IEStyle::GetDefaultButtonSize().x - 8.0f);
             if (ImGui::IEStyle::DefaultButton(ActivateText))
             {
                 if (MidiProcessor.ActivateMidiDeviceProfile(MidiDeviceName))
@@ -103,7 +109,7 @@ void IEMidi::DrawMidiDeviceSelectionWindow()
             ImGui::SameLine();
 
             static const char EditText[] = "Edit";
-            ImGui::SetSmartCursorPosX(WindowWidth * 0.5f + 2.0f);
+            ImGui::SetSmartCursorPosX(WindowWidth * 0.5f + 8.0f);
             if (ImGui::IEStyle::DefaultButton(EditText))
             {
                 if (MidiProcessor.ActivateMidiDeviceProfile(MidiDeviceName))
@@ -121,7 +127,6 @@ void IEMidi::DrawMidiDeviceSelectionWindow()
             }
 
             ImGui::NewLine();
-            ImGui::Separator();
         }
     }
     else 
@@ -192,7 +197,7 @@ void IEMidi::DrawSideBarWindow()
     ImGui::SetNextWindowSize(ImVec2(WindowWidth, WindowHeight), ImGuiCond_Always);
     ImGui::SetNextWindowPos(ImVec2(WindowPosX, WindowPosY));
 
-    ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.061f, 0.061f, 0.061f, 0.500f));
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, ImGui::IEStyle::Colors::SideBarBgColor);
     ImGui::Begin("Sidebar", nullptr, WindowFlags);
 
     /* Begin Midi Device Info */
@@ -201,18 +206,18 @@ void IEMidi::DrawSideBarWindow()
     RtMidiIn& MidiIn = MidiProcessor.GetMidiIn();
 
     ImGui::PushFont(ImGui::IEStyle::GetTitleFont());
-    ImGui::WindowPositionedText(0.5f, 0.02f, "Midi Device Info");
+    ImGui::WindowPositionedText(0.5f, 0.035f, "Midi Device Info");
     ImGui::PopFont();
 
-    ImGui::SetSmartCursorPosYRelative(0.06f);
-    static const int MidiDeviceInfoColumnsNum = 2;
+    ImGui::SetSmartCursorPosYRelative(0.1f);
+    static constexpr int MidiDeviceInfoColumnsNum = 2;
     const float MidiDeviceInfoColumnWidth = WindowWidth / 2.75f;
     const float MidiDeviceInfoTableWidth = MidiDeviceInfoColumnsNum * MidiDeviceInfoColumnWidth;
     const float MidiDeviceInfoTableStartCursor = WindowWidth - MidiDeviceInfoTableWidth;
 
     ImGui::SetSmartCursorPosX(MidiDeviceInfoTableStartCursor * 0.4f);
 
-    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.650f, 0.765f, 1.000f, 0.900f));
+    ImGui::PushStyleColor(ImGuiCol_Text, ImGui::IEStyle::Colors::SecondaryTextColor);
     if (ImGui::BeginTable("##MidiDeviceInfoTable", MidiDeviceInfoColumnsNum, ImGuiTableFlags_SizingFixedSame | ImGuiTableFlags_NoHostExtendX))
     {
         ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_WidthFixed, MidiDeviceInfoColumnWidth);
@@ -279,11 +284,11 @@ void IEMidi::DrawSideBarWindow()
     /* Begin Midi Logger */
 
     ImGui::PushFont(ImGui::IEStyle::GetTitleFont());
-    ImGui::WindowPositionedText(0.5f, 0.55f, "Midi Logger");
+    ImGui::WindowPositionedText(0.5f, 0.535f, "Midi Logger");
     ImGui::PopFont();
 
-    ImGui::SetSmartCursorPosYRelative(0.58f);
-    static const int MidiLoggerColumnsNum = 3;
+    ImGui::SetSmartCursorPosYRelative(0.6f);
+    static constexpr int MidiLoggerColumnsNum = 3;
     const float MidiLoggerColumnWidth = WindowWidth / 4.0f;
     const float MidiLoggerTableWidth = MidiLoggerColumnsNum * MidiLoggerColumnWidth;
     const float MidiLoggerTableStartCursor = WindowWidth - MidiLoggerTableWidth;

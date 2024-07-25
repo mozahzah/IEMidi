@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: GPL-2.0-only
-# Copyright © 2024 mozahzah (Incus Entertainment). All rights reserved.
+# Copyright © 2024 Immortal Echoes. All rights reserved.
+# Author: mozahzah
 
 cmake_minimum_required(VERSION 3.29)
 
@@ -41,7 +42,7 @@ endforeach()
 
 begin_section_message("Packaging IEMidi")
 set(CPACK_PACKAGE_NAME "${PROJECT_NAME}")
-set(CPACK_PACKAGE_VENDOR "Incus Entertainment")
+set(CPACK_PACKAGE_VENDOR "Immortal Echoes")
 set(CPACK_PACKAGE_DIRECTORY "${CMAKE_SOURCE_DIR}/package")
 set(CPACK_PACKAGE_INSTALL_DIRECTORY "${CPACK_PACKAGE_NAME}")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Midi Map Editor Tool")

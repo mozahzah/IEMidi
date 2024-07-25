@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright © 2024 mozahzah (Incus Entertainment). All rights reserved.
+// Copyright © 2024 Immortal Echoes. All rights reserved.
+// Author: mozahzah
 
 #include "IEMidiEditor.h"
 
@@ -183,20 +184,31 @@ void IEMidiEditor::DrawMidiDevicePropertyEditor(IEMidiDeviceProperty& MidiDevice
         ImGui::SetSmartCursorPosXRelative(0.4f);
 
         ImGui::GetWindowDrawList()->ChannelsSplit(2);
-        ImGui::GetWindowDrawList()->ChannelsSetCurrent(1);
         if (m_MidiDeviceProcessor)
         {
-            if (ImGui::Selectable("Record Midi", MidiDeviceProperty.bIsRecording))
+            ImGui::GetWindowDrawList()->ChannelsSetCurrent(1);
+            if (ImGui::Selectable("Record Midi", MidiDeviceProperty.bIsRecording, ImGuiSelectableFlags_AllowOverlap))
             {
                 MidiDeviceProperty.bIsRecording = true;
+            }
+
+            ImGui::GetWindowDrawList()->ChannelsSetCurrent(0);
+            if (ImGui::IsItemHovered() || MidiDeviceProperty.bIsRecording)
+            {
+                ImGui::GetWindowDrawList()->AddRectFilled(ImGui::GetItemRectMin(), ImGui::GetItemRectMax(), ImColor(ImGui::IEStyle::Colors::RedButtonHoveredColor));
+            }
+            else 
+            {
+                ImGui::GetWindowDrawList()->AddRectFilled(ImGui::GetItemRectMin(), ImGui::GetItemRectMax(), ImColor(ImGui::IEStyle::Colors::RedButtonColor));
             }
         }
         else
         {
+            ImGui::GetWindowDrawList()->ChannelsSetCurrent(1);
             ImGui::Text("Recording not available");
+            ImGui::GetWindowDrawList()->ChannelsSetCurrent(0);
+            ImGui::GetWindowDrawList()->AddRectFilled(ImGui::GetItemRectMin(), ImGui::GetItemRectMax(), ImColor(ImGui::IEStyle::Colors::RedButtonColor));
         }
-        ImGui::GetWindowDrawList()->ChannelsSetCurrent(0);
-        ImGui::GetWindowDrawList()->AddRectFilled(ImGui::GetItemRectMin(), ImGui::GetItemRectMax(), IM_COL32(255, 0, 0, 50));
         ImGui::GetWindowDrawList()->ChannelsMerge();
 
         ImGui::TableNextColumn();

@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright © 2024 mozahzah (Incus Entertainment). All rights reserved.
+// Copyright © 2024 Immortal Echoes. All rights reserved.
+// Author: mozahzah
 
 #pragma once
 
