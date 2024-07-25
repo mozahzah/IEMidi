@@ -287,6 +287,7 @@ void IEMidi::DrawSideBarWindow()
     ImGui::WindowPositionedText(0.5f, 0.535f, "Midi Logger");
     ImGui::PopFont();
 
+    ImGui::NewLine();
     ImGui::SetSmartCursorPosYRelative(0.6f);
     static constexpr int MidiLoggerColumnsNum = 3;
     const float MidiLoggerColumnWidth = WindowWidth / 4.0f;
