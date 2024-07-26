@@ -1,4 +1,4 @@
-# <img src="Resources/Logos/IEIcon.png" alt="IE Logo" width="26"> IEMidi
+# <img src="Resources/IE-Brand-Kit/IE-Logo-No-Bg.png" alt="IE Logo" width="26"> IEMidi
 
 <img src="Resources/Demos/Demo-Editor.png" alt="IEMidi Editor" width="10000">
 
