@@ -1,6 +1,8 @@
-# <img src="Resources/IE-Brand-Kit/IE-Logo-No-Bg.png" alt="IE Logo" width="26"> IEMidi
+<p align="center">
+<img src="Resources/IE-Brand-Kit/IE-Logo-NoBg.png" alt="IE Logo" width="256"> 
+</p>
 
-<img src="Resources/Demos/Demo-Editor.png" alt="IEMidi Editor" width="10000">
+# IEMidi
 
 **IEMidi** is a simple, open-source MIDI editor that leverages RtMidi for its MIDI message handling.  
 The editor is designed to map any MIDI message to various actions such as volume control, mute, console commands or opening files.  
