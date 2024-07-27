@@ -41,7 +41,7 @@ foreach(DEPENDENCY ${DEPENDENCIES})
 endforeach()
 
 begin_section_message("Packaging IEMidi")
-set(IE_LOGO_ICON_PATH "${CMAKE_SOURCE_DIR}\\Resources\\IE-Brand-Kit\\IE-Logo.ico")
+set(IE_LOGO_ICON_PATH "${CMAKE_SOURCE_DIR}\\Resources\\IE-Brand-Kit\\IE-Logo-NoBg.ico")
 set(CPACK_PACKAGE_NAME "${PROJECT_NAME}")
 set(CPACK_PACKAGE_VENDOR "Interactive Echoes")
 set(CPACK_PACKAGE_DIRECTORY "${CMAKE_SOURCE_DIR}/package")
@@ -57,7 +57,7 @@ set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE")
 if(WIN32)
   set(CPACK_GENERATOR NSIS64)
   set(CPACK_NSIS_MUI_ICON "${IE_LOGO_ICON_PATH}")
-  set(CPACK_NSIS_MUI_UNIICON "${CMAKE_SOURCE_DIR}\\Resources\\IE-Brand-Kit\\IE-Logo.ico")
+  set(CPACK_NSIS_MUI_UNIICON "${IE_LOGO_ICON_PATH}")
   set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL TRUE)
   set(CPACK_NSIS_MUI_FINISHPAGE_RUN "${CPACK_PACKAGE_NAME}.exe")
   set(CPACK_NSIS_DEFINES "RequestExecutionLevel admin")
@@ -81,13 +81,14 @@ if(WIN32)
 
     post_vulkanRT:
 
-    CreateShortCut \"$DESKTOP\\${CPACK_PACKAGE_NAME}.lnk\" \"$INSTDIR\\bin\\${CPACK_PACKAGE_NAME}.exe\" \"\" \"$INSTDIR\\Resources\\IE-Brand-Kit\\IE-Logo.ico\" 0
-    CreateShortCut \"$SMPROGRAMS\\${CPACK_PACKAGE_NAME}.lnk\" \"$INSTDIR\\bin\\${CPACK_PACKAGE_NAME}.exe\" \"\" \"$INSTDIR\\Resources\\IE-Brand-Kit\\IE-Logo.ico\" 0")
+    CreateShortCut \"$DESKTOP\\${CPACK_PACKAGE_NAME}.lnk\" \"$INSTDIR\\bin\\${CPACK_PACKAGE_NAME}.exe\" \"\" \"$INSTDIR\\Resources\\IE-Brand-Kit\\IE-Logo-NoBg.ico\" 0
+    CreateShortCut \"$SMPROGRAMS\\${CPACK_PACKAGE_NAME}.lnk\" \"$INSTDIR\\bin\\${CPACK_PACKAGE_NAME}.exe\" \"\" \"$INSTDIR\\Resources\\IE-Brand-Kit\\IE-Logo-NoBg.ico\" 0")
   set(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "
     Delete \"$DESKTOP\\${CPACK_PACKAGE_NAME}.lnk\"
     Delete \"$SMPROGRAMS\\${CPACK_PACKAGE_NAME}.lnk\"")
 elseif(APPLE)
   set(CPACK_GENERATOR DragNDrop)
+  
 endif()
 
 include(CPack)
