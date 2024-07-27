@@ -22,5 +22,8 @@ It also includes a MIDI logger for monitoring MIDI messages in real-time.
 - [RtMidi](https://github.com/thestk/rtmidi)
 - [Rapid YAML](https://github.com/biojppm/rapidyaml)
 
+## Contribution
+Contributors are welcomed to this open-source project. Any feedback or assistance, whether in coding, packaging, documentation, design, or testing, is greatly appreciated. 
+
 ## License
 This work is licensed under the [SPDX-License-Identifier: GPL-2.0-only](./LICENSE).
