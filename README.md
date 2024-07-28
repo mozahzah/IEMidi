@@ -1,5 +1,5 @@
 <p align="center">
-<img src="Resources/IE-Brand-Kit/IE-Logo-NoBg.png" alt="IE Logo" width="256"> 
+<img src="Resources/IE-Brand-Kit/IE-Logo-NoBg.png#gh-dark-mode-only" alt="IE Logo" width="256"> 
 </p>
 
 # IEMidi
