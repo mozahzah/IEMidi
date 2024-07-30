@@ -8,7 +8,6 @@
 #include "Extensions/ie.imgui.h"
 
 #include "IECore.h"
-#include "IERenderer.h"
 
 #include "IEMidiEditor.h"
 #include "IEMidiProcessor.h"

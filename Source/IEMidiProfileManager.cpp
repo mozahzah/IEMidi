@@ -7,8 +7,6 @@
 #include "ryml.hpp"
 #include "ryml_std.hpp"
 
-#include "IEUtils.h"
-
 uint32_t IEMidiDeviceProperty::MidiDevicePropertyIDGenerator = 0;
 
 static constexpr char IEMIDI_PROFILES_FILENAME[] = "profiles.yaml";
