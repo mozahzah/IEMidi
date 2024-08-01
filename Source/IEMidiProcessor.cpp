@@ -27,7 +27,7 @@ IEResult IEMidiProcessor::ProcessMidiInputMessage(const std::vector<unsigned cha
                                 Result.Type = IEResult::Type::Success;
 
                                 const float Value = static_cast<float>(MidiMessage[2]);
-                                m_VolumeAction->SetVolume(Value);
+                                m_VolumeAction->SetVolume(Value/127.0f);
                             }
                             break;
                         }
