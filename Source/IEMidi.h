@@ -46,7 +46,7 @@ public:
 private:
     void DrawMidiDeviceSelectionWindow();
     void DrawSelectedMidiDeviceEditorWindow();
-    void DrawSideBarWindow();
+    void DrawSideBar();
 
 private:
     static void OnAppWindowClosed(uint32_t WindowID, void* UserData);
@@ -62,5 +62,5 @@ private:
 
 private:
     IEAppState m_AppState = IEAppState::None;
-    float m_WindowOffsetAbs = 50.0f;
+    float m_WindowOffsetAbs = 70.0f;
 };

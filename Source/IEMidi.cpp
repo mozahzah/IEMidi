@@ -38,7 +38,7 @@ void IEMidi::OnPreFrameRender()
         }
         case IEAppState::MidiDeviceEditor:
         {
-            DrawSideBarWindow();
+            DrawSideBar();
             DrawSelectedMidiDeviceEditorWindow();
             break;
         }
@@ -150,7 +150,7 @@ void IEMidi::DrawSelectedMidiDeviceEditorWindow()
                                             ImGuiWindowFlags_NoTitleBar;
 
     ImGuiViewport& MainViewport = *ImGui::GetMainViewport();
-    const float WindowWidth = MainViewport.Size.x * 0.7f - m_WindowOffsetAbs;
+    const float WindowWidth = MainViewport.Size.x * 0.75f - m_WindowOffsetAbs * 0.5f;
     const float WindowHeight = MainViewport.Size.y - m_WindowOffsetAbs;
     const float WindowPosX = MainViewport.Pos.x + (MainViewport.Size.x - WindowWidth) - m_WindowOffsetAbs * 0.5f;
     const float WindowPosY = MainViewport.Pos.y + ((MainViewport.Size.y - WindowHeight) * 0.5f);
@@ -181,26 +181,26 @@ void IEMidi::DrawSelectedMidiDeviceEditorWindow()
     ImGui::End();
 }
 
-void IEMidi::DrawSideBarWindow()
+void IEMidi::DrawSideBar()
 {
     static constexpr uint32_t WindowFlags = ImGuiWindowFlags_NoResize |
                                             ImGuiWindowFlags_NoMove |
                                             ImGuiWindowFlags_NoCollapse |
-                                            ImGuiWindowFlags_NoScrollbar |
                                             ImGuiWindowFlags_NoTitleBar;
 
     ImGuiViewport& MainViewport = *ImGui::GetMainViewport();
-    const float WindowWidth = MainViewport.Size.x * 0.3f - m_WindowOffsetAbs * 0.5f;
-    const float WindowHeight = MainViewport.Size.y - m_WindowOffsetAbs;
-    const float WindowPosX = MainViewport.Pos.x + m_WindowOffsetAbs * 0.5f;
-    const float WindowPosY = MainViewport.Pos.y + ((MainViewport.Size.y - WindowHeight) * 0.5f);
-    ImGui::SetNextWindowSize(ImVec2(WindowWidth, WindowHeight), ImGuiCond_Always);
-    ImGui::SetNextWindowPos(ImVec2(WindowPosX, WindowPosY));
-
     ImGui::PushStyleColor(ImGuiCol_WindowBg, ImGui::IEStyle::Colors::SideBarBgColor);
-    ImGui::Begin("Sidebar", nullptr, WindowFlags);
 
     /* Begin Midi Device Info */
+
+    const float MidiDeviceInfoWindowWidth = MainViewport.Size.x * 0.25f - m_WindowOffsetAbs;
+    const float MidiDeviceInfoWindowHeight = MainViewport.Size.y * 0.5f - m_WindowOffsetAbs * 0.75f;
+    const float MidiDeviceInfoWindowPosX = MainViewport.Pos.x + m_WindowOffsetAbs * 0.5f;
+    const float MidiDeviceInfoWindowPosY = MainViewport.Pos.y + m_WindowOffsetAbs * 0.5f;
+    ImGui::SetNextWindowSize(ImVec2(MidiDeviceInfoWindowWidth, MidiDeviceInfoWindowHeight), ImGuiCond_Always);
+    ImGui::SetNextWindowPos(ImVec2(MidiDeviceInfoWindowPosX, MidiDeviceInfoWindowPosY));
+    
+    ImGui::Begin("MidiDeviceInfoWindow", nullptr, WindowFlags);
 
     const IEMidiProcessor& MidiProcessor = GetMidiProcessor();
     RtMidiIn& MidiIn = MidiProcessor.GetMidiIn();
@@ -211,9 +211,9 @@ void IEMidi::DrawSideBarWindow()
 
     ImGui::SetSmartCursorPosYRelative(0.1f);
     static constexpr int MidiDeviceInfoColumnsNum = 2;
-    const float MidiDeviceInfoColumnWidth = WindowWidth / 2.75f;
+    const float MidiDeviceInfoColumnWidth = MidiDeviceInfoWindowWidth / 2.75f;
     const float MidiDeviceInfoTableWidth = MidiDeviceInfoColumnsNum * MidiDeviceInfoColumnWidth;
-    const float MidiDeviceInfoTableStartCursor = WindowWidth - MidiDeviceInfoTableWidth;
+    const float MidiDeviceInfoTableStartCursor = MidiDeviceInfoWindowWidth - MidiDeviceInfoTableWidth;
 
     ImGui::SetSmartCursorPosX(MidiDeviceInfoTableStartCursor * 0.4f);
 
@@ -275,29 +275,35 @@ void IEMidi::DrawSideBarWindow()
         ImGui::EndTable();
     }
     ImGui::PopStyleColor();
+    ImGui::End();
 
     /* End Midi Device Info */
     
-    ImGui::SetSmartCursorPosYRelative(0.5f);
-    ImGui::Separator();
-
     /* Begin Midi Logger */
 
+    const float MidiLoggerWindowWidth = MainViewport.Size.x * 0.25f - m_WindowOffsetAbs;
+    const float MidiLoggerWindowHeight = MainViewport.Size.y * 0.5f - m_WindowOffsetAbs * 0.75f;
+    const float MidiLoggerWindowPosX = MainViewport.Pos.x + m_WindowOffsetAbs * 0.5f;
+    const float MidiLoggerWindowPosY = MainViewport.Pos.y + (MainViewport.Size.y - MidiLoggerWindowHeight -  m_WindowOffsetAbs * 0.5f);
+    ImGui::SetNextWindowSize(ImVec2(MidiLoggerWindowWidth, MidiLoggerWindowHeight), ImGuiCond_Always);
+    ImGui::SetNextWindowPos(ImVec2(MidiLoggerWindowPosX, MidiLoggerWindowPosY));
+    
+    ImGui::Begin("MidiLoggerWindow", nullptr, WindowFlags);
+    
     ImGui::PushFont(ImGui::IEStyle::GetTitleFont());
-    ImGui::WindowPositionedText(0.5f, 0.535f, "Midi Logger");
+    ImGui::WindowPositionedText(0.5f, 0.035f, "Midi Logger");
     ImGui::PopFont();
 
-    ImGui::NewLine();
-    ImGui::SetSmartCursorPosYRelative(0.6f);
+    ImGui::SetSmartCursorPosYRelative(0.15f);
     static constexpr int MidiLoggerColumnsNum = 3;
-    const float MidiLoggerColumnWidth = WindowWidth / 4.0f;
+    const float MidiLoggerColumnWidth = MidiLoggerWindowWidth / 4.0f;
     const float MidiLoggerTableWidth = MidiLoggerColumnsNum * MidiLoggerColumnWidth;
-    const float MidiLoggerTableStartCursor = WindowWidth - MidiLoggerTableWidth;
+    const float MidiLoggerTableStartCursor = MidiLoggerWindowWidth - MidiLoggerTableWidth;
 
     ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.650f, 0.765f, 1.000f, 0.900f));
 
-    ImGui::PushFont(ImGui::IEStyle::GetSubtitleFont());
-
+    ImGui::PushFont(ImGui::IEStyle::GetBoldFont());
+    
     static constexpr char StatusText[] = "Status";
     ImGui::SetSmartCursorPosX(MidiLoggerTableStartCursor - ImGui::CalcTextSize(StatusText).x * 0.5f);
     ImGui::Text(StatusText);
@@ -327,7 +333,7 @@ void IEMidi::DrawSideBarWindow()
         std::deque<std::vector<unsigned char>> Copy = GetMidiProcessor().GetIncomingMidiMessages();
         while (!Copy.empty())
         {
-            if (ImGui::GetCursorPosY() > WindowHeight - ImGui::TableGetHeaderRowHeight())
+            if (ImGui::GetCursorPosY() > MidiLoggerWindowHeight - ImGui::TableGetHeaderRowHeight() * 2.0f)
             {
                 break;
             }
@@ -348,11 +354,11 @@ void IEMidi::DrawSideBarWindow()
     }
 
     ImGui::PopStyleColor();
+    ImGui::End();
 
     /* End Midi Logger */
 
     ImGui::PopStyleColor();
-    ImGui::End();
 }
 
 void IEMidi::OnAppWindowClosed(uint32_t WindowID, void* UserData)
