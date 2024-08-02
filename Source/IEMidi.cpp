@@ -150,10 +150,10 @@ void IEMidi::DrawSelectedMidiDeviceEditorWindow()
                                             ImGuiWindowFlags_NoTitleBar;
 
     ImGuiViewport& MainViewport = *ImGui::GetMainViewport();
-    const float WindowWidth = MainViewport.Size.x * 0.7f;
-    const float WindowHeight = MainViewport.Size.y;
-    const float WindowPosX = (MainViewport.Pos.x + MainViewport.Size.x - WindowWidth);
-    const float WindowPosY = MainViewport.Pos.y;
+    const float WindowWidth = MainViewport.Size.x * 0.7f - m_WindowOffsetAbs;
+    const float WindowHeight = MainViewport.Size.y - m_WindowOffsetAbs;
+    const float WindowPosX = MainViewport.Pos.x + (MainViewport.Size.x - WindowWidth) - m_WindowOffsetAbs * 0.5f;
+    const float WindowPosY = MainViewport.Pos.y + ((MainViewport.Size.y - WindowHeight) * 0.5f);
     ImGui::SetNextWindowSize(ImVec2(WindowWidth, WindowHeight), ImGuiCond_Always);
     ImGui::SetNextWindowPos(ImVec2(WindowPosX, WindowPosY));
 
@@ -190,10 +190,10 @@ void IEMidi::DrawSideBarWindow()
                                             ImGuiWindowFlags_NoTitleBar;
 
     ImGuiViewport& MainViewport = *ImGui::GetMainViewport();
-    const float WindowWidth = MainViewport.Size.x * 0.3f;
-    const float WindowHeight = MainViewport.Size.y;
-    const float WindowPosX = MainViewport.Pos.x;
-    const float WindowPosY = MainViewport.Pos.y;
+    const float WindowWidth = MainViewport.Size.x * 0.3f - m_WindowOffsetAbs * 0.5f;
+    const float WindowHeight = MainViewport.Size.y - m_WindowOffsetAbs;
+    const float WindowPosX = MainViewport.Pos.x + m_WindowOffsetAbs * 0.5f;
+    const float WindowPosY = MainViewport.Pos.y + ((MainViewport.Size.y - WindowHeight) * 0.5f);
     ImGui::SetNextWindowSize(ImVec2(WindowWidth, WindowHeight), ImGuiCond_Always);
     ImGui::SetNextWindowPos(ImVec2(WindowPosX, WindowPosY));
 
