@@ -3,7 +3,7 @@
 # Author: mozahzah
 
 cmake_minimum_required(VERSION 3.29)
-project(IEMidi VERSION 1.0.0 LANGUAGES CXX)
+project(IEMidi VERSION 1.1.0 LANGUAGES CXX)
 
 # BEGIN misc function definitions
 
@@ -29,7 +29,6 @@ begin_section_message("Working environment")
 message("System name: ${CMAKE_SYSTEM_NAME}")
 message("System version: ${CMAKE_SYSTEM_VERSION}")
 message("System processor: ${CMAKE_SYSTEM_PROCESSOR}")
-
 
 message("\n------------------------------------------------------------")
 message("Configuring ThirdParty Libraries")

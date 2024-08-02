@@ -39,9 +39,9 @@ foreach(DEPENDENCY ${DEPENDENCIES})
     message("Setting up dependency: ${DEPENDENCY}")
 
     set_target_properties(${DEPENDENCY} PROPERTIES 
-    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
-    LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
-    ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+      RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
+      LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
+      ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
     install(TARGETS ${DEPENDENCY}
         EXPORT "${PROJECT_NAME}Targets"
@@ -53,7 +53,7 @@ foreach(DEPENDENCY ${DEPENDENCIES})
 endforeach()
 
 begin_section_message("Packaging IEMidi")
-set(IE_LOGO_ICON_PATH "${CMAKE_SOURCE_DIR}\\Resources\\IE-Brand-Kit\\IE-Logo-NoBg.ico")
+set(IE_LOGO_ICON_PATH "${CMAKE_SOURCE_DIR}\\ThirdParty\\IECore\\Resources\\IE-Brand-Kit\\IE-Logo-NoBg.ico")
 set(CPACK_PACKAGE_NAME "${PROJECT_NAME}")
 set(CPACK_PACKAGE_VENDOR "Interactive Echoes")
 set(CPACK_PACKAGE_DIRECTORY "${CMAKE_SOURCE_DIR}/package")

@@ -6,7 +6,7 @@
 	url = https://github.com/mozahzah/IEActions.git
 [submodule "ThirdParty/rtmidi"]
 	path = ThirdParty/rtmidi
-	url = https://github.com/thestk/rtmidi.git
+	url = https://github.com/mozahzah/rtmidi.git
 [submodule "ThirdParty/rapidyaml"]
 	path = ThirdParty/rapidyaml
 	url = https://github.com/biojppm/rapidyaml.git
