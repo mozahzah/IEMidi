@@ -209,7 +209,7 @@ void IEMidi::DrawSideBar()
     ImGui::WindowPositionedText(0.5f, 0.035f, "Midi Device Info");
     ImGui::PopFont();
 
-    ImGui::SetSmartCursorPosYRelative(0.1f);
+    ImGui::SetSmartCursorPosYRelative(0.15f);
     static constexpr int MidiDeviceInfoColumnsNum = 2;
     const float MidiDeviceInfoColumnWidth = MidiDeviceInfoWindowWidth / 2.75f;
     const float MidiDeviceInfoTableWidth = MidiDeviceInfoColumnsNum * MidiDeviceInfoColumnWidth;
@@ -230,7 +230,6 @@ void IEMidi::DrawSideBar()
         ImGui::PopFont();
         ImGui::TableNextColumn();
         ImGui::Text("%s", MidiProcessor.HasActiveMidiDeviceProfile() ? MidiProcessor.GetActiveMidiDeviceProfile().Name.c_str() : "No Active Midi Profile");
-        ImGui::NewLine();
 
         ImGui::TableNextColumn();
         ImGui::PushFont(ImGui::IEStyle::GetBoldFont());
@@ -247,7 +246,6 @@ void IEMidi::DrawSideBar()
         ImGui::TableNextColumn();
         ImGui::Text("%s", MidiProcessor.HasActiveMidiDeviceProfile() ?
             std::to_string(MidiProcessor.GetActiveMidiDeviceProfile().GetOutputPortNumber()).c_str() : "No Active Midi Profile");
-        ImGui::NewLine();
 
         ImGui::TableNextColumn();
         ImGui::PushFont(ImGui::IEStyle::GetBoldFont());
@@ -262,7 +260,6 @@ void IEMidi::DrawSideBar()
         ImGui::PopFont();
         ImGui::TableNextColumn();
         ImGui::Text("%s", MidiIn.getVersion().c_str());
-        ImGui::NewLine();
 
         ImGui::TableNextColumn();
         ImGui::PushFont(ImGui::IEStyle::GetBoldFont());
