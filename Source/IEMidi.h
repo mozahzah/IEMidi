@@ -62,5 +62,5 @@ private:
 
 private:
     IEAppState m_AppState = IEAppState::None;
-    float m_WindowOffsetAbs = 70.0f;
+    float m_WindowOffsetAbs = 30.0f;
 };
