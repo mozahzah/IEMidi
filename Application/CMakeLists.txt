@@ -16,6 +16,10 @@ endif()
 
 target_link_libraries(${PROJECT_NAME} PUBLIC LIEMidi)
 
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/Resources"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/Resources" "${CMAKE_BINARY_DIR}/Resources")
+
 set_target_properties(${PROJECT_NAME} PROPERTIES 
   RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
   LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
@@ -52,7 +56,7 @@ foreach(DEPENDENCY ${DEPENDENCIES})
   endif()
 endforeach()
 
-begin_section_message("Packaging IEMidi")
+begin_section_message("Setting packaging settings for IEMidi")
 set(CPACK_PACKAGE_NAME "${PROJECT_NAME}")
 set(CPACK_PACKAGE_VENDOR "Interactive Echoes")
 set(CPACK_PACKAGE_DIRECTORY "${CMAKE_SOURCE_DIR}/package")
@@ -100,6 +104,25 @@ if(WIN32)
     Delete \"$SMPROGRAMS\\${CPACK_PACKAGE_NAME}.lnk\"")
 elseif(APPLE)
   set(CPACK_GENERATOR DragNDrop)
+  set(CPACK_BUNDLE_NAME ${PROJECT_NAME})
+  set(CPACK_BUNDLE_PLIST "${CMAKE_SOURCE_DIR}/info.plist")
+  set(CPACK_BUNDLE_ICON "${CMAKE_SOURCE_DIR}/ThirdParty/IECore/Resources/IE-Brand-Kit/IE-Logo-NoBg-512.icns")
+  set_target_properties(${PROJECT_NAME} PROPERTIES
+    MACOSX_BUNDLE_ICON_FILE "IE-Brand-Kit/IE-Logo-NoBg-512.icns")
+  set(BUNDLE_PATH "${CMAKE_BINARY_DIR}/bin/${PROJECT_NAME}.app")
+
+  set_target_properties(${PROJECT_NAME} PROPERTIES
+    INSTALL_RPATH "@executable_path/../Frameworks"
+    BUILD_RPATH "@executable_path/../Frameworks")
+
+  install(CODE "
+        include(BundleUtilities)
+        fixup_bundle(\"${BUNDLE_PATH}\" \"\" \"\")
+        " COMPONENT Bundle)
+
+  install(DIRECTORY "${CMAKE_BINARY_DIR}/Resources" DESTINATION "${BUNDLE_PATH}/Contents" COMPONENT Bundle)
+  install(TARGETS "${PROJECT_NAME}" DESTINATION "." COMPONENT Bundle)
+  set(CPACK_COMPONENTS_ALL Bundle)
 endif()
 
 include(CPack)
