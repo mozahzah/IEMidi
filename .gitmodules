@@ -1,12 +1,16 @@
 [submodule "ThirdParty/IECore"]
 	path = ThirdParty/IECore
 	url = https://github.com/mozahzah/IECore.git
+	branch = master
 [submodule "ThirdParty/IEActions"]
 	path = ThirdParty/IEActions
 	url = https://github.com/mozahzah/IEActions.git
+	branch = master
 [submodule "ThirdParty/rtmidi"]
 	path = ThirdParty/rtmidi
 	url = https://github.com/mozahzah/rtmidi.git
+	branch = master
 [submodule "ThirdParty/rapidyaml"]
 	path = ThirdParty/rapidyaml
 	url = https://github.com/biojppm/rapidyaml.git
+	branch = master
