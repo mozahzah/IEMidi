@@ -2,17 +2,9 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <key>CFBundleIdentifier</key>
-    <string>com.interactive-echoes.${PROJECT_NAME}</string>
     <key>CFBundleExecutable</key>
-    <string>${PROJECT_NAME}</string>
-    <key>CFBundleVersion</key>
-    <string>1.0</string>
-    <key>CFBundleShortVersionString</key>
-    <string>1.0</string>
-    <key>CFBundleName</key>
-    <string>${PROJECT_NAME}</string>
-    <key>CFBundleDisplayName</key>
-    <string>${PROJECT_NAME}</string>
+    <string>IEMidi</string>
+    <key>CFBundleIconFile</key>
+    <string>IE-Brand-Kit/IE-Logo-NoBg-512.icns</string>
 </dict>
 </plist>
