@@ -8,12 +8,11 @@
 
 # IEMidi
 
-**IEMidi** is a simple, open-source MIDI editor that leverages RtMidi for its MIDI message handling.  
-The editor is designed to map any MIDI message to various actions such as volume control, mute, console commands or opening files.  
-It also includes a MIDI logger for monitoring MIDI messages in real-time.
-<p align="center">
-<img src="Resources/Demos/IEMidi-Demo-Editor.png" alt="IE Logo" width="1920"> 
-</p>
+**IEMidi** is a simple, open-source MIDI editor that leverages RtMidi for its MIDI message handling and imgui for its rendering backend.  
+The editor is designed to map any MIDI message to various actions such as volume control, mute, console commands or opening files. It also includes a MIDI logger for monitoring MIDI messages in real-time.
+<div align="center">
+<img src="Resources/Demos/IEMidi-Demo-Editor.png" alt="Demo" width="1920"> 
+</div>
 
 ## Features
 - **MIDI Map Editor**: Map MIDI messages to various actions like volume, mute, console commands, or opening files.
