@@ -2,7 +2,7 @@
 # Copyright © 2024 Interactive Echoes. All rights reserved.
 # Author: mozahzah
 
-cmake_minimum_required(VERSION 3.29)
+cmake_minimum_required(VERSION 3.20)
 
 file(GLOB SOURCE_FILES "./*.cpp")
 add_library(LIEMidi STATIC ${SOURCE_FILES})
