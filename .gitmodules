@@ -1,10 +1,10 @@
 [submodule "ThirdParty/IECore"]
 	path = ThirdParty/IECore
-	url = https://github.com/mozahzah/IECore.git
+	url = https://github.com/Interactive-Echoes/IECore.git
 	branch = master
 [submodule "ThirdParty/IEActions"]
 	path = ThirdParty/IEActions
-	url = https://github.com/mozahzah/IEActions.git
+	url = https://github.com/Interactive-Echoes/IEActions.git
 	branch = master
 [submodule "ThirdParty/rtmidi"]
 	path = ThirdParty/rtmidi
