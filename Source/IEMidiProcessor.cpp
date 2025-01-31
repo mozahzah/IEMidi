@@ -202,24 +202,35 @@ IEResult IEMidiProcessor::ActivateMidiDeviceProfile(const std::string& MidiDevic
     RtMidiIn& MidiIn = GetMidiIn();
     for (int InputPortNumber = 0; InputPortNumber < MidiIn.getPortCount(); InputPortNumber++)
     {
-        const std::string MidiDeviceName = GetSanitizedMidiDeviceName(MidiIn.getPortName(InputPortNumber), InputPortNumber);
+        const std::string& MidiDeviceName = GetSanitizedMidiDeviceName(MidiIn.getPortName(InputPortNumber), InputPortNumber);
 
         RtMidiOut& MidiOut = GetMidiOut();
         for (int OutputPortNumber = 0; OutputPortNumber < MidiOut.getPortCount(); OutputPortNumber++)
         {
-            if (MidiOut.getPortName(OutputPortNumber).find(MidiDeviceName) != std::string::npos)
+            const std::string& MidiDeviceNameOut = GetSanitizedMidiDeviceName(MidiOut.getPortName(OutputPortNumber), InputPortNumber);
+            if (MidiDeviceNameOut.find(MidiDeviceName) != std::string::npos)
             {
                 m_ActiveMidiDeviceProfile = IEMidiDeviceProfile(MidiDeviceName, InputPortNumber, OutputPortNumber);
 
+                if (MidiIn.isPortOpen())
+                {
+                    MidiIn.cancelCallback();
+                    MidiIn.closePort();
+                }
+                MidiIn.setCallback(&IEMidiProcessor::OnRtMidiCallback, this);
+                
                 MidiIn.openPort(m_ActiveMidiDeviceProfile->GetInputPortNumber());
+
+                if (MidiOut.isPortOpen())
+                {
+                    MidiOut.closePort();
+                }
                 MidiOut.openPort(m_ActiveMidiDeviceProfile->GetOutputPortNumber());
 
                 for (const std::vector<unsigned char>& MidiMessage : m_ActiveMidiDeviceProfile->InitialOutputMidiMessages)
                 {
                     MidiOut.sendMessage(&MidiMessage);
                 }
-
-                MidiIn.setCallback(&IEMidiProcessor::OnRtMidiCallback, this);
 
                 Result.Type = IEResult::Type::Success;
                 Result.Message = std::format("Successfully activated midi device profile {}", MidiDeviceName);

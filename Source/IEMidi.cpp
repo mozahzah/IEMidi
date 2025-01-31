@@ -81,6 +81,8 @@ void IEMidi::DrawMidiDeviceSelectionWindow()
     {
         for (const std::string& MidiDeviceName : AvailableMidiDevices)
         {
+            ImGui::PushID(MidiDeviceName.c_str());
+
             ImGui::PushFont(ImGui::IEStyle::GetSubtitleFont());
             ImGui::SetSmartCursorPosYRelative(0.2f);
             ImGui::CenteredText("%s", MidiDeviceName.c_str());
@@ -102,7 +104,6 @@ void IEMidi::DrawMidiDeviceSelectionWindow()
                     }
                     
                     GetRenderer().CloseAppWindow();
-                    break;
                 }
             }
 
@@ -122,11 +123,12 @@ void IEMidi::DrawMidiDeviceSelectionWindow()
                     }
 
                     SetAppState(IEAppState::MidiDeviceEditor);
-                    break;
                 }
             }
 
             ImGui::NewLine();
+
+            ImGui::PopID();
         }
     }
     else 
